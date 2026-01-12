@@ -8,11 +8,19 @@ from django.contrib.auth.decorators import login_required
 def dashboard(request):
     return render(request, 'dashboard.html')
 
-
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
+
+    path('login/', auth_views.LoginView.as_view(
+        template_name='login.html'
+    ), name='login'),
+
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-    path('', dashboard, name='dashboard'),
+
+    # ✅ REGISTER FIX
+    path('register/', include('users.urls')),
+
     path('courses/', include('courses.urls')),
+
+    path('', dashboard, name='dashboard'),
 ]
