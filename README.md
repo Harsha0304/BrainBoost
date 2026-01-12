@@ -37,7 +37,7 @@ This project is developed as a **final-year academic project at NTTF**.
 | --------------- | ----------------------------- |
 | Backend         | Django, Django REST Framework |
 | Database        | SQLite (development)          |
-| Frontend        | Planned (React / Flutter)     |
+| Frontend        | HTML & CSS                    |
 | Auth            | Django Authentication         |
 | Version Control | Git & GitHub                  |
 
