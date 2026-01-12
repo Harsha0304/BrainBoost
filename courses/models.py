@@ -1,5 +1,8 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
+from gamification.models import UserPoints
+
 
 User = settings.AUTH_USER_MODEL
 
@@ -70,3 +73,14 @@ class LessonProgress(models.Model):
 
     def __str__(self):
         return f"{self.student} - {self.lesson}"
+
+def mark_completed(self):
+    if not self.completed:
+        self.completed = True
+        self.completed_at = timezone.now()
+        self.save()
+
+        user_points = UserPoints.objects.get(user=self.student)
+        user_points.total_points += 10
+        user_points.update_level()
+        
