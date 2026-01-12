@@ -11,3 +11,8 @@ class CourseAdmin(admin.ModelAdmin):
     inlines = [LessonInline]
 
 admin.site.register(Lesson)
+
+from .models import Enrollment, LessonProgress
+
+admin.site.register(Enrollment)
+admin.site.register(LessonProgress)
