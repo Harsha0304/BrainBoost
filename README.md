@@ -137,12 +137,3 @@ Final Year Student, NTTF
 This project is intended for **educational use only**.
 
 ---
-
-If you want, next I can:
-
-* Add a **Professional `.gitignore` for Django**
-* Create **requirements.txt**
-* Help you write **commit messages**
-* Start **Step-7: Custom User Model**
-
-Just say **next** 🚀
