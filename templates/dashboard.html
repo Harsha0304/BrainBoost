@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Dashboard</h2>
+
+<p>Your Level: {{ user.points.level }}</p>
+<p>Total Points: {{ user.points.total_points }}</p>
+
+<a href="{% url 'courses' %}">View Courses</a>
+{% endblock %}

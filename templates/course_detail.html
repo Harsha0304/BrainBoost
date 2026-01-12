@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>{{ course.title }}</h2>
+<p>{{ course.description }}</p>
+
+<p>Progress: {{ progress }}%</p>
+
+<h3>Lessons</h3>
+<ul>
+{% for lesson in lessons %}
+    <li>{{ lesson.title }}</li>
+{% endfor %}
+</ul>
+
+<a href="{% url 'courses' %}">Back</a>
+{% endblock %}

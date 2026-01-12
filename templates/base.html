@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BrainBoost</title>
+</head>
+<body>
+    <h1>🧠 BrainBoost</h1>
+
+    {% if user.is_authenticated %}
+        <p>
+            Welcome {{ user.username }} |
+            Points: {{ user.points.total_points }} |
+            Level: {{ user.points.level }} |
+            <a href="{% url 'logout' %}">Logout</a>
+        </p>
+        <hr>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</body>
+</html>
