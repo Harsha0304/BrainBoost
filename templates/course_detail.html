@@ -15,3 +15,8 @@
 
 <a href="{% url 'courses' %}">Back</a>
 {% endblock %}
+
+<form method="post">
+    {% csrf_token %}
+    <button class="btn btn-primary">Enroll</button>
+</form>
