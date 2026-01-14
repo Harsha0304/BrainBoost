@@ -32,7 +32,7 @@ class Lesson(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.course.title} - {self.title}"
+        return self.title
 
 class Enrollment(models.Model):
     student = models.ForeignKey(

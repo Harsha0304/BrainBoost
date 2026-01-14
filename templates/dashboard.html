@@ -1,10 +1,142 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<h2>Dashboard</h2>
 
-<p>Your Level: {{ user.points.level }}</p>
-<p>Total Points: {{ user.points.total_points }}</p>
+<style>
+/* ===== Dashboard Styles ===== */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
 
-<a href="{% url 'courses' %}">View Courses</a>
+.clock {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.card-box {
+    border-radius: 16px;
+    padding: 25px;
+    color: white;
+    animation: fadeUp 0.8s ease;
+    transition: transform 0.3s ease;
+}
+
+.card-box:hover {
+    transform: translateY(-6px);
+}
+
+.bg-blue { background: linear-gradient(135deg, #0d6efd, #4dabf7); }
+.bg-green { background: linear-gradient(135deg, #198754, #40c057); }
+.bg-purple { background: linear-gradient(135deg, #6f42c1, #9775fa); }
+.bg-orange { background: linear-gradient(135deg, #fd7e14, #ffa94d); }
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.section-title {
+    margin-top: 40px;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+</style>
+
+<!-- HEADER -->
+<div class="dashboard-header">
+    <h2>👋 Welcome, {{ user.username }}</h2>
+    <div class="clock" id="liveClock"></div>
+</div>
+
+<!-- STAT CARDS -->
+<div class="row g-4">
+    <div class="col-md-3">
+        <div class="card-box bg-blue">
+            <h6>Level</h6>
+            <h2>{{ user.points.level }}</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card-box bg-green">
+            <h6>Total Points</h6>
+            <h2>{{ user.points.total_points }}</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card-box bg-purple">
+            <h6>Courses Enrolled</h6>
+            <h2>3</h2> <!-- dynamic later -->
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card-box bg-orange">
+            <h6>Time Spent</h6>
+            <h2 id="timeSpent">0 min</h2>
+        </div>
+    </div>
+</div>
+
+<!-- GRAPH -->
+<h4 class="section-title">📊 Learning Progress</h4>
+<canvas id="progressChart" height="120"></canvas>
+
+<!-- STATUS -->
+<div class="alert alert-info mt-4">
+    🚀 Keep going! Consistency is the key to leveling up your skills.
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+/* ===== LIVE CLOCK ===== */
+function updateClock() {
+    const now = new Date();
+    document.getElementById("liveClock").innerText =
+        now.toLocaleDateString() + " | " + now.toLocaleTimeString();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ===== TIME SPENT TRACKING (SESSION BASED) ===== */
+let startTime = localStorage.getItem("dashboardStartTime");
+if (!startTime) {
+    startTime = Date.now();
+    localStorage.setItem("dashboardStartTime", startTime);
+}
+
+setInterval(() => {
+    const diff = Math.floor((Date.now() - startTime) / 60000);
+    document.getElementById("timeSpent").innerText = diff + " min";
+}, 60000);
+
+/* ===== PROGRESS CHART ===== */
+const ctx = document.getElementById('progressChart');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: ['AWS', 'Python', 'Django'],
+        datasets: [{
+            label: 'Completion %',
+            data: [70, 40, 55],
+            backgroundColor: '#0d6efd'
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+</script>
+
 {% endblock %}

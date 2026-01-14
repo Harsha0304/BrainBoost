@@ -1,22 +1,32 @@
 {% extends 'base.html' %}
-
 {% block content %}
+
 <h2>{{ course.title }}</h2>
 <p>{{ course.description }}</p>
 
-<p>Progress: {{ progress }}%</p>
+{% if user.role == 'ADMIN' %}
+    <a href="{% url 'add_lesson' course.id %}" class="btn btn-success mb-3">
+        ➕ Add Lesson
+    </a>
+{% endif %}
 
-<h3>Lessons</h3>
-<ul>
+<h4>Lessons</h4>
+
+<ul class="list-group">
 {% for lesson in lessons %}
-    <li>{{ lesson.title }}</li>
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>
+            <strong>{{ lesson.order }}.</strong> {{ lesson.title }}
+        </span>
+        <a href="{% url 'lesson_detail' lesson.id %}" class="btn btn-sm btn-outline-primary">
+            Open
+        </a>
+    </li>
+{% empty %}
+    <li class="list-group-item">No lessons added yet.</li>
 {% endfor %}
 </ul>
 
-<a href="{% url 'courses' %}">Back</a>
-{% endblock %}
+<a href="{% url 'courses' %}" class="btn btn-secondary mt-3">⬅ Back</a>
 
-<form method="post">
-    {% csrf_token %}
-    <button class="btn btn-primary">Enroll</button>
-</form>
+{% endblock %}
