@@ -2,137 +2,172 @@
 {% block content %}
 
 <style>
-/* ===== Dashboard Styles ===== */
-.dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
+:root {
+    --bg: #f8f9fa;
+    --text: #212529;
+    --card: #ffffff;
 }
-
-.clock {
-    font-size: 1.1rem;
-    font-weight: 500;
+[data-theme="dark"] {
+    --bg: #121212;
+    --text: #f1f1f1;
+    --card: #1e1e1e;
+}
+body {
+    background: var(--bg);
+    color: var(--text);
 }
 
 .card-box {
+    background: var(--card);
     border-radius: 16px;
-    padding: 25px;
-    color: white;
-    animation: fadeUp 0.8s ease;
+    padding: 20px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
     transition: transform 0.3s ease;
 }
-
 .card-box:hover {
     transform: translateY(-6px);
 }
 
-.bg-blue { background: linear-gradient(135deg, #0d6efd, #4dabf7); }
-.bg-green { background: linear-gradient(135deg, #198754, #40c057); }
-.bg-purple { background: linear-gradient(135deg, #6f42c1, #9775fa); }
-.bg-orange { background: linear-gradient(135deg, #fd7e14, #ffa94d); }
-
-@keyframes fadeUp {
-    from { opacity: 0; transform: translateY(40px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.section-title {
-    margin-top: 40px;
-    margin-bottom: 15px;
-    font-weight: 600;
+.theme-toggle {
+    cursor: pointer;
 }
 </style>
 
 <!-- HEADER -->
-<div class="dashboard-header">
-    <h2>👋 Welcome, {{ user.username }}</h2>
-    <div class="clock" id="liveClock"></div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>📊 Dashboard</h2>
+    <div>
+        <span id="clock"></span>
+        <button class="btn btn-sm btn-outline-secondary ms-3 theme-toggle"
+                onclick="toggleTheme()">
+            🌗 Theme
+        </button>
+    </div>
 </div>
 
-<!-- STAT CARDS -->
+<!-- QUICK ACTION -->
+<div class="mb-4">
+    <a href="{% url 'courses' %}" class="btn btn-primary">
+        📚 View All Courses
+    </a>
+</div>
+
+<!-- STATS -->
 <div class="row g-4">
     <div class="col-md-3">
-        <div class="card-box bg-blue">
-            <h6>Level</h6>
-            <h2>{{ user.points.level }}</h2>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="card-box bg-green">
-            <h6>Total Points</h6>
-            <h2>{{ user.points.total_points }}</h2>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="card-box bg-purple">
+        <div class="card-box">
             <h6>Courses Enrolled</h6>
-            <h2>3</h2> <!-- dynamic later -->
+            <h2>{{ enrolled_count }}</h2>
         </div>
     </div>
 
     <div class="col-md-3">
-        <div class="card-box bg-orange">
-            <h6>Time Spent</h6>
-            <h2 id="timeSpent">0 min</h2>
+        <div class="card-box">
+            <h6>Lessons Completed</h6>
+            <h2>{{ completed_lessons }} / {{ total_lessons }}</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card-box">
+            <h6>Overall Progress</h6>
+            <h2>{{ progress }}%</h2>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card-box">
+            <h6>Total Time Spent</h6>
+            <h2>{{ time_spent_minutes }} min</h2>
         </div>
     </div>
 </div>
 
-<!-- GRAPH -->
-<h4 class="section-title">📊 Learning Progress</h4>
-<canvas id="progressChart" height="120"></canvas>
+<!-- ENROLLED COURSES -->
+<h4 class="mt-5">📚 Enrolled Courses</h4>
+<ul class="list-group">
+{% for course in enrolled_courses %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>{{ course.title }}</span>
+        <a href="{% url 'course_detail' course.id %}"
+           class="btn btn-sm btn-outline-primary">
+            Open
+        </a>
+    </li>
+{% empty %}
+    <li class="list-group-item">
+        Not enrolled in any course yet.
+        <a href="{% url 'courses' %}">Browse Courses</a>
+    </li>
+{% endfor %}
+</ul>
 
-<!-- STATUS -->
-<div class="alert alert-info mt-4">
-    🚀 Keep going! Consistency is the key to leveling up your skills.
+<!-- LAST 7 DAYS GRAPH -->
+<h4 class="mt-5">⏱ Time Spent (Last 7 Days)</h4>
+<div class="card-box mt-3">
+    <canvas id="timeSpentChart" height="140"></canvas>
 </div>
 
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-/* ===== LIVE CLOCK ===== */
-function updateClock() {
-    const now = new Date();
-    document.getElementById("liveClock").innerText =
-        now.toLocaleDateString() + " | " + now.toLocaleTimeString();
-}
-setInterval(updateClock, 1000);
-updateClock();
-
-/* ===== TIME SPENT TRACKING (SESSION BASED) ===== */
-let startTime = localStorage.getItem("dashboardStartTime");
-if (!startTime) {
-    startTime = Date.now();
-    localStorage.setItem("dashboardStartTime", startTime);
-}
-
+/* LIVE CLOCK */
 setInterval(() => {
-    const diff = Math.floor((Date.now() - startTime) / 60000);
-    document.getElementById("timeSpent").innerText = diff + " min";
-}, 60000);
+    document.getElementById("clock").innerText =
+        new Date().toLocaleString();
+}, 1000);
 
-/* ===== PROGRESS CHART ===== */
-const ctx = document.getElementById('progressChart');
-new Chart(ctx, {
+/* THEME TOGGLE */
+function toggleTheme() {
+    const theme =
+        document.body.getAttribute("data-theme") === "dark"
+            ? "light"
+            : "dark";
+    document.body.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+}
+document.body.setAttribute(
+    "data-theme",
+    localStorage.getItem("theme") || "light"
+);
+
+/* LAST 7 DAYS TIME SPENT GRAPH */
+new Chart(document.getElementById('timeSpentChart'), {
     type: 'bar',
     data: {
-        labels: ['AWS', 'Python', 'Django'],
+        labels: {{ daily_labels|safe }},
         datasets: [{
-            label: 'Completion %',
-            data: [70, 40, 55],
-            backgroundColor: '#0d6efd'
+            label: 'Minutes Spent',
+            data: {{ daily_values|safe }},
+            backgroundColor: '#0d6efd',
+            borderRadius: 8,
+            minBarLength: 10
         }]
     },
     options: {
         responsive: true,
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(ctx) {
+                        return ctx.parsed.y + ' minutes';
+                    }
+                }
+            }
+        },
         scales: {
             y: {
                 beginAtZero: true,
-                max: 100
+                ticks: { stepSize: 1 },
+                title: {
+                    display: true,
+                    text: 'Minutes'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Last 7 Days'
+                }
             }
         }
     }
