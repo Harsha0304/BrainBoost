@@ -37,7 +37,7 @@ This project is developed as a **final-year academic project at NTTF**.
 | --------------- | ----------------------------- |
 | Backend         | Django, Django REST Framework |
 | Database        | SQLite (development)          |
-| Frontend        | Planned (React / Flutter)     |
+| Frontend        | HTML & CSS                    |
 | Auth            | Django Authentication         |
 | Version Control | Git & GitHub                  |
 
@@ -137,12 +137,3 @@ Final Year Student, NTTF
 This project is intended for **educational use only**.
 
 ---
-
-If you want, next I can:
-
-* Add a **Professional `.gitignore` for Django**
-* Create **requirements.txt**
-* Help you write **commit messages**
-* Start **Step-7: Custom User Model**
-
-Just say **next** 🚀
