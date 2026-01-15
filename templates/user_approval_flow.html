@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">User Approval</h5>
+            </div>
+
+            <div class="card-body">
+
+                <!-- User Info -->
+                <div class="mb-3">
+                    <label class="form-label text-muted">Username</label>
+                    <div class="fw-semibold">{{ user.username }}</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-muted">Email</label>
+                    <div class="fw-semibold">{{ user.email }}</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-muted">Role</label>
+                    <span class="badge bg-info text-dark">
+                        {{ user.role }}
+                    </span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-muted">Email Status</label>
+                    {% if user.email_verified %}
+                        <span class="badge bg-success">Verified</span>
+                    {% else %}
+                        <span class="badge bg-danger">Not Verified</span>
+                    {% endif %}
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-muted">Account Status</label>
+                    {% if user.is_active %}
+                        <span class="badge bg-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">Pending Approval</span>
+                    {% endif %}
+                </div>
+
+                <!-- Actions -->
+                {% if user.email_verified and not user.is_active %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                Approve User
+                            </button>
+                        </div>
+                    </form>
+                {% elif user.is_active %}
+                    <div class="alert alert-success mb-0">
+                        This user is already approved.
+                    </div>
+                {% else %}
+                    <div class="alert alert-danger mb-0">
+                        User email is not verified yet. Approval is disabled.
+                    </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

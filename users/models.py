@@ -13,7 +13,8 @@ class User(AbstractUser):
         choices=ROLE_CHOICES,
         default='STUDENT'
     )
-
+    email_verified = models.BooleanField(default=False)
+    
     def save(self, *args, **kwargs):
         if self.is_superuser:
             self.role = 'ADMIN'
@@ -28,3 +29,13 @@ class UserSession(models.Model):
         if self.logout_time:
             return (self.logout_time - self.login_time).total_seconds()
         return 0
+
+class UserApprovalLog(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='approved_by', null=True, blank=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.approved_by.username}"
