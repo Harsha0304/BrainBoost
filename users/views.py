@@ -93,3 +93,63 @@ def verify_email(request):
             return redirect('verify_email')
 
     return render(request, 'verify_email.html')
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import get_user_model
+from django.shortcuts import render, redirect, get_object_or_404
+
+from .models import UserApprovalLog
+
+User = get_user_model()
+
+def is_staff_user(user):
+    return user.is_staff or user.is_superuser
+
+@login_required
+@user_passes_test(is_staff_user)
+def pending_user_approvals(request):
+    users = User.objects.filter(
+        role='STUDENT',
+        email_verified=True,
+        is_active=False
+    ).order_by('date_joined')
+
+    return render(request, 'user_approvals.html', {
+        'users': users
+    })
+
+@login_required
+@user_passes_test(is_staff_user)
+def approve_user(request, user_id):
+    if request.method != 'POST':
+        return redirect('pending_user_approvals')
+
+    user = get_object_or_404(User, id=user_id)
+
+    # Business rules (same as admin)
+    if (
+        user.role != 'STUDENT'
+        or user.is_active
+        or not user.email_verified
+    ):
+        messages.warning(
+            request,
+            'User cannot be approved due to validation rules.'
+        )
+        return redirect('pending_user_approvals')
+
+    user.is_active = True
+    user.save(update_fields=['is_active'])
+
+    UserApprovalLog.objects.create(
+        user=user,
+        approved_by=request.user
+    )
+
+    messages.success(
+        request,
+        f'User "{user.username}" approved successfully.'
+    )
+
+    return redirect('pending_user_approvals')

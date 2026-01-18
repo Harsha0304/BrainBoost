@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.table-wrapper {
+    max-width: 1000px;
+    margin: 40px auto;
+}
+
+.approval-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    padding: 25px;
+}
+
+.approval-card h2 {
+    margin-bottom: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}
+
+th {
+    background: #f8f9fa;
+}
+
+.approve-btn {
+    background: #198754;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.approve-btn:hover {
+    background: #146c43;
+}
+
+.empty-msg {
+    text-align: center;
+    color: #666;
+    padding: 20px;
+}
+</style>
+
+<div class="table-wrapper">
+    <div class="approval-card">
+        <h2>🛂 Pending User Approvals</h2>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if users %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Date Joined</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.date_joined|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                <form
+                                    method="post"
+                                    action="{% url 'approve_user' user.id %}"
+                                >
+                                    {% csrf_token %}
+                                    <button
+                                        type="submit"
+                                        class="approve-btn"
+                                    >
+                                        Approve
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-msg">
+                No users pending approval 🎉
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

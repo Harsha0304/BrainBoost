@@ -36,9 +36,18 @@ body {
 <!-- HEADER -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>📊 Dashboard</h2>
-    <div>
+
+    <div class="d-flex align-items-center gap-3">
         <span id="clock"></span>
-        <button class="btn btn-sm btn-outline-secondary ms-3 theme-toggle"
+
+        {% if request.user.is_authenticated and request.user.is_superuser %}
+            <a href="{% url 'pending_user_approvals' %}"
+               class="btn btn-sm btn-outline-warning">
+                🛂 Approvals
+            </a>
+        {% endif %}
+
+        <button class="btn btn-sm btn-outline-secondary theme-toggle"
                 onclick="toggleTheme()">
             🌗 Theme
         </button>
