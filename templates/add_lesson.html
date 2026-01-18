@@ -1,33 +1,236 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<h2>➕ Add Lesson to "{{ course.title }}"</h2>
+<style>
+.lesson-wrapper {
+    max-width: 640px;
+    margin: 60px auto;
+}
 
-<form method="post" class="mt-4">
-    {% csrf_token %}
+.lesson-card {
+    background: var(--card, #ffffff);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    animation: fadeSlide 0.7s ease;
+}
 
-    <div class="mb-3">
-        <label class="form-label">Lesson Title</label>
-        {{ form.title }}
+@keyframes fadeSlide {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.lesson-card h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.lesson-card .form-label {
+    font-weight: 500;
+}
+
+.lesson-card input,
+.lesson-card textarea,
+.lesson-card select {
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.lesson-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 25px;
+}
+
+.hint {
+    font-size: 13px;
+    color: #666;
+}
+
+/* ===== Drag & Drop ===== */
+.drop-zone {
+    border: 2px dashed #bbb;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s, background 0.3s;
+    position: relative;
+}
+
+.drop-zone:hover {
+    border-color: #0d6efd;
+    background: #f8f9ff;
+}
+
+.drop-zone.dragover {
+    border-color: #198754;
+    background: #e9f7ef;
+}
+
+.drop-zone input[type="file"] {
+    display: none;
+}
+
+.drop-text {
+    color: #666;
+    font-size: 14px;
+}
+</style>
+
+<div class="lesson-wrapper">
+    <div class="lesson-card">
+        <h2>➕ Add Lesson to "{{ course.title }}"</h2>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label class="form-label">Lesson Title</label>
+                {{ form.title }}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Description / Notes</label>
+                {{ form.content }}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Content Type</label>
+                {{ form.content_type }}
+                <div class="hint">
+                    Select whether this lesson is a PDF or a Video
+                </div>
+            </div>
+
+            <!-- PDF Upload -->
+            <div class="mb-3" id="pdf-drop-wrapper">
+                <label class="form-label">PDF File</label>
+                <div class="drop-zone" data-type="PDF">
+                    <span class="drop-text">
+                        Drag & drop PDF here or click to upload
+                    </span>
+                    {{ form.pdf_file }}
+                </div>
+                <small class="hint">Only PDF files allowed</small>
+            </div>
+
+            <!-- Video Upload -->
+            <div class="mb-3" id="video-drop-wrapper">
+                <label class="form-label">Video File</label>
+                <div class="drop-zone" data-type="VIDEO">
+                    <span class="drop-text">
+                        Drag & drop Video here or click to upload
+                    </span>
+                    {{ form.video_file }}
+                </div>
+                <small class="hint">MP4 recommended</small>
+            </div>
+
+            <div class="form-check mb-3">
+                {{ form.is_active }}
+                <label class="form-check-label"
+                       for="{{ form.is_active.id_for_label }}">
+                    Active
+                </label>
+            </div>
+
+            <div class="lesson-actions">
+                <button class="btn btn-primary">
+                    Save Lesson
+                </button>
+                <a href="{% url 'course_detail' course.id %}"
+                   class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+            </div>
+        </form>
     </div>
+</div>
 
-    <div class="mb-3">
-        <label class="form-label">Content</label>
-        {{ form.content }}
-    </div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
 
-    <div class="mb-3">
-        <label class="form-label">Order</label>
-        {{ form.order }}
-    </div>
+    const contentType = document.getElementById("id_content_type");
 
-    <div class="form-check mb-3">
-        {{ form.is_active }}
-        <label class="form-check-label">Active</label>
-    </div>
+    const pdfWrapper = document.getElementById("pdf-drop-wrapper");
+    const videoWrapper = document.getElementById("video-drop-wrapper");
 
-    <button class="btn btn-primary">Save Lesson</button>
-    <a href="{% url 'course_detail' course.id %}" class="btn btn-secondary">Cancel</a>
-</form>
+    const pdfInput = document.getElementById("id_pdf_file");
+    const videoInput = document.getElementById("id_video_file");
+
+    function toggleFields() {
+        if (contentType.value === "PDF") {
+            pdfWrapper.style.display = "block";
+            videoWrapper.style.display = "none";
+            videoInput.value = "";
+        } 
+        else if (contentType.value === "VIDEO") {
+            pdfWrapper.style.display = "none";
+            videoWrapper.style.display = "block";
+            pdfInput.value = "";
+        } 
+        else {
+            pdfWrapper.style.display = "none";
+            videoWrapper.style.display = "none";
+            pdfInput.value = "";
+            videoInput.value = "";
+        }
+    }
+
+    contentType.addEventListener("change", toggleFields);
+    toggleFields();
+
+    document.querySelectorAll(".drop-zone").forEach(zone => {
+        const input = zone.querySelector("input[type=file]");
+        const text = zone.querySelector(".drop-text");
+        const type = zone.dataset.type;
+
+        zone.addEventListener("click", () => input.click());
+
+        zone.addEventListener("dragover", e => {
+            e.preventDefault();
+            zone.classList.add("dragover");
+        });
+
+        zone.addEventListener("dragleave", () => {
+            zone.classList.remove("dragover");
+        });
+
+        zone.addEventListener("drop", e => {
+            e.preventDefault();
+            zone.classList.remove("dragover");
+
+            const file = e.dataTransfer.files[0];
+            if (!file) return;
+
+            if (type === "PDF" && file.type !== "application/pdf") {
+                alert("Please upload a PDF file.");
+                return;
+            }
+
+            if (type === "VIDEO" && !file.type.startsWith("video/")) {
+                alert("Please upload a video file.");
+                return;
+            }
+
+            input.files = e.dataTransfer.files;
+            text.innerText = file.name;
+        });
+
+        input.addEventListener("change", () => {
+            if (input.files.length) {
+                text.innerText = input.files[0].name;
+            }
+        });
+    });
+});
+</script>
 
 {% endblock %}

@@ -1,11 +1,12 @@
 from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from .models import UserApprovalLog
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 User = get_user_model()
 
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
+class UserAdmin(BaseUserAdmin):
     list_display = (
         'username',
         'email',
@@ -18,6 +19,12 @@ class UserAdmin(admin.ModelAdmin):
     list_filter = ('role', 'email_verified', 'is_active')
     search_fields = ('username', 'email')
     actions = ['approve_selected_users']
+
+    fieldsets = BaseUserAdmin.fieldsets + (
+        ("Custom Fields", {
+            "fields": ("email_verified", "role"),
+        }),
+    )
 
     @admin.action(description="Approve selected users")
     def approve_selected_users(self, request, queryset):

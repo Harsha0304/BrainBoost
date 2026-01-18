@@ -50,7 +50,10 @@
 
 <div class="course-wrapper">
     <div class="course-card">
-        <h2>➕ Add New Course</h2>
+        <h2>✏ Edit Course</h2>
+        <p class="text-muted text-center">
+            Update course details for <strong>{{ course.title }}</strong>
+        </p>
 
         <form method="post">
             {% csrf_token %}
@@ -75,9 +78,9 @@
 
             <div class="course-actions">
                 <button class="btn btn-primary">
-                    Create Course
+                    Save Changes
                 </button>
-                <a href="{% url 'courses' %}"
+                <a href="{% url 'course_detail' course.id %}"
                    class="btn btn-outline-secondary">
                     Cancel
                 </a>

@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+    .lesson-wrapper {
+        max-width: 640px;
+        margin: 60px auto;
+    }
+
+    .lesson-card {
+        background: var(--card, #fff);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .lesson-card h2 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .lesson-card input,
+    .lesson-card textarea,
+    .lesson-card select {
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    .drop-zone {
+        border: 2px dashed #bbb;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .drop-zone.dragover {
+        border-color: #198754;
+        background: #e9f7ef;
+    }
+
+    .drop-zone input {
+        display: none;
+    }
+
+    .lesson-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 25px;
+    }
+</style>
+
+<div class="lesson-wrapper">
+    <div class="lesson-card">
+        <h2>✏ Edit Lesson — {{ lesson.title }}</h2>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label class="form-label">Lesson Title</label>
+                {{ form.title }}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                {{ form.content }}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Content Type</label>
+                {{ form.content_type }}
+            </div>
+
+            <!-- PDF -->
+            <div class="mb-3" id="pdf-wrapper">
+                <label class="form-label">PDF File</label>
+
+                {% if lesson.pdf_file %}
+                <p class="mb-2">
+                    📄 Current file:
+                    <a href="{{ lesson.pdf_file.url }}" target="_blank">
+                        {{ lesson.pdf_file.name|slice:"13:" }}
+                    </a>
+                </p>
+                {% endif %}
+
+                <div class="drop-zone">
+                    <span>Drag & drop new PDF here or click to upload</span>
+                    {{ form.pdf_file }}
+                </div>
+            </div>
+
+            <!-- Video -->
+            <div class="mb-3" id="video-wrapper">
+                <label class="form-label">Video File</label>
+
+                {% if lesson.video_file %}
+                <p class="mb-2">
+                    🎥 Current file:
+                    <a href="{{ lesson.video_file.url }}" target="_blank">
+                        {{ lesson.video_file.name|slice:"15:" }}
+                    </a>
+                </p>
+                {% endif %}
+
+                <div class="drop-zone">
+                    <span>Drag & drop new PDF here or click to upload</span>
+                    {{ form.pdf_file }}
+                </div>
+            </div>
+
+            <div class="form-check mb-3">
+                {{ form.is_active }}
+                <label class="form-check-label">Active</label>
+            </div>
+
+            <div class="lesson-actions">
+                <button class="btn btn-primary">
+                    Save Changes
+                </button>
+                <a href="{% url 'course_detail' course.id %}" class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const type = document.getElementById("id_content_type");
+        const pdf = document.getElementById("pdf-wrapper");
+        const video = document.getElementById("video-wrapper");
+
+        function toggle() {
+            pdf.style.display = type.value === "PDF" ? "block" : "none";
+            video.style.display = type.value === "VIDEO" ? "block" : "none";
+        }
+
+        type.addEventListener("change", toggle);
+        toggle();
+    });
+</script>
+
+{% endblock %}

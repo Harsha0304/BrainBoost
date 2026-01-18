@@ -106,6 +106,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 AUTH_USER_MODEL = 'users.User'
 
 LOGIN_URL = '/login/'
@@ -124,3 +127,5 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'administration.views.UsernameEmailAuthBackend',
 ]
+
+X_FRAME_OPTIONS = 'SAMEORIGIN'

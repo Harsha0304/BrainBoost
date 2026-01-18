@@ -1,32 +1,60 @@
 {% extends 'base.html' %}
 {% block content %}
 
+<style>
+    .lesson-admin-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .lesson-badge {
+        font-size: 12px;
+    }
+</style>
+
 <h2>{{ course.title }}</h2>
 <p>{{ course.description }}</p>
 
 <!-- =========================
-     ADMIN ACTIONS
+     ADMIN ACTIONS (COURSE)
 ========================= -->
 {% if user.role == 'ADMIN' %}
-    <a href="{% url 'add_lesson' course.id %}" class="btn btn-success mb-3">
+<div class="mb-3 d-flex gap-2">
+    <a href="{% url 'add_lesson' course.id %}" class="btn btn-success">
         ➕ Add Lesson
     </a>
+
+    <a href="{% url 'edit_course' course.id %}" class="btn btn-outline-secondary">
+        ✏ Edit Course
+    </a>
+
+    {% if course.is_active %}
+    <form method="post" action="{% url 'toggle_course' course.id %}">
+        {% csrf_token %}
+        <button class="btn btn-outline-danger">Deactivate</button>
+    </form>
+    {% else %}
+    <form method="post" action="{% url 'toggle_course' course.id %}">
+        {% csrf_token %}
+        <button class="btn btn-outline-success">Activate</button>
+    </form>
+    {% endif %}
+</div>
 {% endif %}
 
 <!-- =========================
-     ENROLLMENT STATUS
+     ENROLLMENT STATUS (STUDENT)
 ========================= -->
 {% if user.role != 'ADMIN' %}
-    {% if not enrolled %}
-        <a href="{% url 'enroll_course' course.id %}"
-           class="btn btn-primary mb-3">
-            📘 Enroll in Course
-        </a>
-    {% else %}
-        <div class="alert alert-success mb-3">
-            ✅ You are enrolled in this course
-        </div>
-    {% endif %}
+{% if not enrolled %}
+<a href="{% url 'enroll_course' course.id %}" class="btn btn-primary mb-3">
+    📘 Enroll in Course
+</a>
+{% else %}
+<div class="alert alert-success mb-3">
+    ✅ You are enrolled in this course
+</div>
+{% endif %}
 {% endif %}
 
 <hr>
@@ -35,28 +63,64 @@
 
 <ul class="list-group">
 
-{% if enrolled or user.role == 'ADMIN' %}
+    {% if enrolled or user.role == 'ADMIN' %}
     {% for lesson in lessons %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            <span>
-                <strong>{{ lesson.order }}.</strong> {{ lesson.title }}
-            </span>
+    <li class="list-group-item d-flex justify-content-between align-items-center">
 
-            <a href="{% url 'lesson_detail' lesson.id %}"
-               class="btn btn-sm btn-outline-primary">
-                Open
+        <span>
+            <strong>{{ lesson.order }}.</strong>
+            {{ lesson.title }}
+
+            {% if not lesson.is_active %}
+            <span class="badge bg-secondary lesson-badge">
+                Inactive
+            </span>
+            {% endif %}
+        </span>
+
+        <!-- =========================
+                 ADMIN LESSON ACTIONS
+            ========================= -->
+        {% if user.role == 'ADMIN' %}
+        <div class="lesson-admin-actions">
+            
+            <a href="{% url 'edit_lesson' lesson.id %}" class="btn btn-sm btn-outline-secondary">
+                ✏ Edit
             </a>
-        </li>
+
+            {% if lesson.is_active %}
+            <form method="post" action="{% url 'toggle_lesson' lesson.id %}">
+                {% csrf_token %}
+                <button class="btn btn-outline-danger">Deactivate</button>
+            </form>
+            {% else %}
+            <form method="post" action="{% url 'toggle_lesson' lesson.id %}">
+                {% csrf_token %}
+                <button class="btn btn-outline-success">Activate</button>
+            </form>
+            {% endif %}
+
+        </div>
+
+        <!-- =========================
+                 STUDENT ACTION
+            ========================= -->
+        {% else %}
+        <a href="{% url 'lesson_detail' lesson.id %}" class="btn btn-sm btn-outline-primary">
+            Open
+        </a>
+        {% endif %}
+    </li>
     {% empty %}
-        <li class="list-group-item">
-            No lessons added yet.
-        </li>
+    <li class="list-group-item">
+        No lessons added yet.
+    </li>
     {% endfor %}
-{% else %}
+    {% else %}
     <li class="list-group-item text-muted">
         🔒 Enroll in this course to access lessons.
     </li>
-{% endif %}
+    {% endif %}
 
 </ul>
 

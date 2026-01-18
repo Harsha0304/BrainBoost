@@ -6,8 +6,21 @@ class CourseForm(forms.ModelForm):
         model = Course
         fields = ['title', 'description', 'is_active']
 
+class PlainFileInput(forms.FileInput):
+    pass
 
 class LessonForm(forms.ModelForm):
     class Meta:
         model = Lesson
-        fields = ['title', 'content', 'order', 'is_active']
+        fields = [
+            'title',
+            'content',
+            'content_type',
+            'pdf_file',
+            'video_file',
+            'is_active',
+        ]
+        widgets = {
+            'pdf_file': PlainFileInput(),
+            'video_file': PlainFileInput(),
+        }
