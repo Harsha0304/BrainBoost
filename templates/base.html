@@ -63,6 +63,16 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* ===== Badge Pills ===== */
+        .badge-pill {
+            background: #0d6efd;
+            color: white;
+            border-radius: 50px;
+            padding: 4px 10px;
+            font-size: 12px;
+            margin-left: 4px;
+        }
     </style>
 </head>
 <body>
@@ -71,12 +81,31 @@
     <a class="navbar-brand" href="/">🧠 BrainBoost</a>
 
     {% if user.is_authenticated %}
-        <div class="d-flex align-items-center ms-auto">
-            <span class="text-white me-3">
-                {{ user.username }} |
-                Points: {{ user.points.total_points }} |
-                Level: {{ user.points.level }}
+        <div class="d-flex align-items-center ms-auto gap-3">
+
+            <!-- USER STATS -->
+            <span class="text-white small">
+                👤 {{ user.username }}
             </span>
+
+            {% if user.points %}
+                <span class="badge bg-primary">
+                    ⭐ {{ user.points.total_points }} pts
+                </span>
+                <span class="badge bg-success">
+                    🧩 Level {{ user.points.level }}
+                </span>
+            {% endif %}
+
+            <!-- BADGES PREVIEW -->
+            {% if user.badges.all %}
+                <span class="text-white small">
+                    🏆
+                    {% for ub in user.badges.all|slice:":3" %}
+                        <span class="badge-pill">{{ ub.badge.icon }}</span>
+                    {% endfor %}
+                </span>
+            {% endif %}
 
             <!-- Logout Form -->
             <form id="logoutForm" method="post" action="{% url 'logout' %}">
@@ -113,14 +142,10 @@ const overlay = document.getElementById("logoutOverlay");
 if (logoutForm) {
     logoutForm.addEventListener("submit", function (e) {
         e.preventDefault(); // stop immediate logout
-
-        // show overlay
         overlay.classList.add("show");
-
-        // submit logout after delay
         setTimeout(() => {
             logoutForm.submit();
-        }, 1500); // 1.5 seconds
+        }, 1500);
     });
 }
 </script>

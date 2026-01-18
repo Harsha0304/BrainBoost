@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2 class="mb-4">🏆 Leaderboard</h2>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        {% if leaderboard %}
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>User</th>
+                    <th>Points</th>
+                    <th>Level</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for entry in leaderboard %}
+                <tr>
+                    <td>
+                        {% if forloop.counter == 1 %}🥇
+                        {% elif forloop.counter == 2 %}🥈
+                        {% elif forloop.counter == 3 %}🥉
+                        {% else %}{{ forloop.counter }}
+                        {% endif %}
+                    </td>
+                    <td>{{ entry.user.username }}</td>
+                    <td>{{ entry.total_points }}</td>
+                    <td>Level {{ entry.level }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p class="text-muted text-center mb-0">
+                No leaderboard data available yet.
+            </p>
+        {% endif %}
+
+    </div>
+</div>
+
+<a href="{% url 'dashboard' %}" class="btn btn-secondary mt-3">
+    ⬅ Back to Dashboard
+</a>
+
+{% endblock %}

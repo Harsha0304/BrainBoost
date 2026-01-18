@@ -10,6 +10,8 @@ from .models import (
 )
 from .forms import CourseForm, LessonForm
 
+from gamification.models import UserPoints, Badge, UserBadge
+
 
 # =========================
 # COURSE LIST
@@ -56,7 +58,6 @@ def course_detail(request, course_id):
         is_active=True
     ).order_by('order')
 
-    # ✅ Check enrollment
     enrolled = Enrollment.objects.filter(
         student=request.user,
         course=course
@@ -111,7 +112,7 @@ def add_lesson(request, course_id):
 
 
 # =========================
-# LESSON DETAIL + COMPLETION
+# LESSON DETAIL + COMPLETION + POINTS
 # =========================
 @login_required
 def lesson_detail(request, lesson_id):
@@ -133,11 +134,31 @@ def lesson_detail(request, lesson_id):
         lesson=lesson
     )
 
-    # ✅ Mark lesson as completed
-    if request.method == 'POST':
+    # =========================
+    # MARK COMPLETED + GAMIFICATION
+    # =========================
+    if request.method == 'POST' and not progress.completed:
         progress.completed = True
         progress.completed_at = now()
         progress.save()
+
+        # ⭐ POINTS LOGIC
+        user_points, _ = UserPoints.objects.get_or_create(
+            user=request.user
+        )
+        user_points.add_points(10)  # 10 points per lesson
+
+        # 🏆 BADGE CHECK
+        badges = Badge.objects.filter(
+            points_required__lte=user_points.total_points
+        )
+
+        for badge in badges:
+            UserBadge.objects.get_or_create(
+                user=request.user,
+                badge=badge
+            )
+
         return redirect(
             'course_detail',
             course_id=lesson.course.id

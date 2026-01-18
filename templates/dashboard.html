@@ -39,15 +39,14 @@ body {
 
     <div class="d-flex align-items-center gap-3">
         <span id="clock"></span>
-
+        
         {% if request.user.is_authenticated and request.user.is_superuser %}
             <a href="{% url 'pending_user_approvals' %}"
                class="btn btn-sm btn-outline-warning">
                 🛂 Approvals
             </a>
         {% endif %}
-
-        <button class="btn btn-sm btn-outline-secondary theme-toggle"
+        <button class="btn btn-sm btn-outline-secondary  theme-toggle"
                 onclick="toggleTheme()">
             🌗 Theme
         </button>
@@ -86,8 +85,27 @@ body {
 
     <div class="col-md-3">
         <div class="card-box">
-            <h6>Total Time Spent</h6>
+            <h6>Today Time Spent</h6>
             <h2>{{ time_spent_minutes }} min</h2>
+        </div>
+    </div>
+</div>
+
+<!-- 🔥 STREAK SECTION -->
+<div class="row g-4 mt-1">
+    <div class="col-md-6">
+        <div class="card-box text-center">
+            <h6>🔥 Current Learning Streak</h6>
+            <h2>{{ current_streak }} day{{ current_streak|pluralize }}</h2>
+            <small class="text-muted">Keep learning daily!</small>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card-box text-center">
+            <h6>🏆 Longest Streak</h6>
+            <h2>{{ longest_streak }} day{{ longest_streak|pluralize }}</h2>
+            <small class="text-muted">Your best consistency</small>
         </div>
     </div>
 </div>
@@ -166,7 +184,6 @@ new Chart(document.getElementById('timeSpentChart'), {
         scales: {
             y: {
                 beginAtZero: true,
-                ticks: { stepSize: 1 },
                 title: {
                     display: true,
                     text: 'Minutes'
