@@ -18,11 +18,14 @@ from gamification.models import UserPoints, Badge, UserBadge
 # =========================
 @login_required
 def course_list(request):
-    courses = Course.objects.filter(is_active=True)
+    if request.user.role == 'ADMIN':
+        courses = Course.objects.all()
+    else:
+        courses = Course.objects.filter(is_active=True)
+
     return render(request, 'courses.html', {
         'courses': courses
     })
-
 
 # =========================
 # CREATE COURSE (ADMIN)
@@ -46,7 +49,6 @@ def create_course(request):
         'form': form
     })
 
-
 # =========================
 # COURSE DETAIL + ENROLLMENT
 # =========================
@@ -69,7 +71,6 @@ def course_detail(request, course_id):
         'enrolled': enrolled
     })
 
-
 # =========================
 # ENROLL COURSE (STUDENT)
 # =========================
@@ -83,7 +84,6 @@ def enroll_course(request, course_id):
     )
 
     return redirect('course_detail', course_id=course.id)
-
 
 # =========================
 # ADD LESSON (ADMIN)
@@ -109,7 +109,6 @@ def add_lesson(request, course_id):
         'form': form,
         'course': course
     })
-
 
 # =========================
 # LESSON DETAIL + COMPLETION + POINTS
