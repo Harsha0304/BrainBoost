@@ -4,29 +4,64 @@
 <h2>{{ course.title }}</h2>
 <p>{{ course.description }}</p>
 
+<!-- =========================
+     ADMIN ACTIONS
+========================= -->
 {% if user.role == 'ADMIN' %}
     <a href="{% url 'add_lesson' course.id %}" class="btn btn-success mb-3">
         ➕ Add Lesson
     </a>
 {% endif %}
 
+<!-- =========================
+     ENROLLMENT STATUS
+========================= -->
+{% if user.role != 'ADMIN' %}
+    {% if not enrolled %}
+        <a href="{% url 'enroll_course' course.id %}"
+           class="btn btn-primary mb-3">
+            📘 Enroll in Course
+        </a>
+    {% else %}
+        <div class="alert alert-success mb-3">
+            ✅ You are enrolled in this course
+        </div>
+    {% endif %}
+{% endif %}
+
+<hr>
+
 <h4>Lessons</h4>
 
 <ul class="list-group">
-{% for lesson in lessons %}
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-        <span>
-            <strong>{{ lesson.order }}.</strong> {{ lesson.title }}
-        </span>
-        <a href="{% url 'lesson_detail' lesson.id %}" class="btn btn-sm btn-outline-primary">
-            Open
-        </a>
+
+{% if enrolled or user.role == 'ADMIN' %}
+    {% for lesson in lessons %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>
+                <strong>{{ lesson.order }}.</strong> {{ lesson.title }}
+            </span>
+
+            <a href="{% url 'lesson_detail' lesson.id %}"
+               class="btn btn-sm btn-outline-primary">
+                Open
+            </a>
+        </li>
+    {% empty %}
+        <li class="list-group-item">
+            No lessons added yet.
+        </li>
+    {% endfor %}
+{% else %}
+    <li class="list-group-item text-muted">
+        🔒 Enroll in this course to access lessons.
     </li>
-{% empty %}
-    <li class="list-group-item">No lessons added yet.</li>
-{% endfor %}
+{% endif %}
+
 </ul>
 
-<a href="{% url 'courses' %}" class="btn btn-secondary mt-3">⬅ Back</a>
+<a href="{% url 'courses' %}" class="btn btn-secondary mt-3">
+    ⬅ Back to Courses
+</a>
 
 {% endblock %}
