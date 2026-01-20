@@ -1,38 +1,73 @@
 {% extends 'base.html' %}
 {% block content %}
 
+<style>
+    .current-user {
+        background: #e7f1ff !important;
+        font-weight: 600;
+    }
+    .rank {
+        font-size: 1.1rem;
+    }
+    .progress {
+        height: 8px;
+    }
+</style>
+
 <h2 class="mb-4">🏆 Leaderboard</h2>
 
 <div class="card shadow-sm">
     <div class="card-body">
 
         {% if leaderboard %}
-        <table class="table table-striped align-middle">
-            <thead>
+        <div class="table-responsive">
+        <table class="table align-middle">
+            <thead class="table-light">
                 <tr>
-                    <th>#</th>
+                    <th>Rank</th>
                     <th>User</th>
                     <th>Points</th>
                     <th>Level</th>
+                    <th>Badges</th>
                 </tr>
             </thead>
             <tbody>
             {% for entry in leaderboard %}
-                <tr>
-                    <td>
+                <tr class="{% if entry.user == request.user %}current-user{% endif %}">
+                    <td class="rank">
                         {% if forloop.counter == 1 %}🥇
                         {% elif forloop.counter == 2 %}🥈
                         {% elif forloop.counter == 3 %}🥉
                         {% else %}{{ forloop.counter }}
                         {% endif %}
                     </td>
-                    <td>{{ entry.user.username }}</td>
-                    <td>{{ entry.total_points }}</td>
+
+                    <td>
+                        {{ entry.user.username }}
+                        {% if entry.user == request.user %}
+                            <span class="badge bg-primary ms-1">You</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {{ entry.total_points }}
+                        <div class="progress mt-1">
+                            <div class="progress-bar bg-success"
+                                 style="width: {{ entry.total_points|divisibleby:100|yesno:'100,50' }}%">
+                            </div>
+                        </div>
+                    </td>
+
                     <td>Level {{ entry.level }}</td>
+
+                    <td>
+                        {{ entry.user.badges.count }}
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
+        </div>
         {% else %}
             <p class="text-muted text-center mb-0">
                 No leaderboard data available yet.
@@ -42,8 +77,10 @@
     </div>
 </div>
 
-<a href="{% url 'dashboard' %}" class="btn btn-secondary mt-3">
-    ⬅ Back to Dashboard
-</a>
+<div class="mt-3 d-flex justify-content-between">
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+        ⬅ Back to Dashboard
+    </a>
+</div>
 
 {% endblock %}

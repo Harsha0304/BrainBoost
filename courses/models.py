@@ -1,10 +1,14 @@
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.utils.timezone import now
 
 User = settings.AUTH_USER_MODEL
 
 
+# =========================
+# COURSE
+# =========================
 class Course(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
@@ -14,9 +18,16 @@ class Course(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def total_lessons(self):
+        return self.lessons.filter(is_active=True).count()
+
     def __str__(self):
         return self.title
 
+
+# =========================
+# LESSON
+# =========================
 class Lesson(models.Model):
     CONTENT_TYPE_CHOICES = (
         ('PDF', 'PDF'),
@@ -70,11 +81,15 @@ class Lesson(models.Model):
 
     def __str__(self):
         return self.title
-    
+
     class Meta:
         unique_together = ('course', 'order')
         ordering = ['order']
-        
+
+
+# =========================
+# ENROLLMENT
+# =========================
 class Enrollment(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
@@ -84,6 +99,9 @@ class Enrollment(models.Model):
         unique_together = ('student', 'course')
 
 
+# =========================
+# LESSON PROGRESS
+# =========================
 class LessonProgress(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE)
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
@@ -92,3 +110,43 @@ class LessonProgress(models.Model):
 
     class Meta:
         unique_together = ('student', 'lesson')
+
+
+# =========================
+# COURSE COMPLETION (NEW)
+# =========================
+class CourseCompletion(models.Model):
+    student = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='completed_courses'
+    )
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='completions'
+    )
+    completed_at = models.DateTimeField(default=now)
+
+    class Meta:
+        unique_together = ('student', 'course')
+
+    def __str__(self):
+        return f"{self.student} completed {self.course}"
+
+class CourseCompletion(models.Model):
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE
+    )
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('student', 'course')
+
+    def __str__(self):
+        return f"{self.student} - {self.course}"
