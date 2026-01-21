@@ -51,8 +51,3 @@ class RegisterForm(UserCreationForm):
             raise forms.ValidationError('This email already exists.')
         return email
 
-    def clean_username(self):
-        username = self.cleaned_data['username']
-        if any(char.isdigit() for char in username):
-            raise forms.ValidationError("Username should not contain numbers.")
-        return username

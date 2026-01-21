@@ -47,7 +47,7 @@ def dashboard(request):
     )
 
     total_lessons = Lesson.objects.filter(
-        course__in=enrolled_courses
+        course__in=enrolled_courses, is_active=True
     ).count()
 
     completed_lessons = LessonProgress.objects.filter(
