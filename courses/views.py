@@ -1,13 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.utils.timezone import now
+from django.utils.timezone import now, localdate
 from django.views.decorators.http import require_POST
 from django.db.models import Max
 from django.http import HttpResponse
+
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
-from django.utils.timezone import localdate
 
 from .models import (
     Course,
@@ -19,6 +19,7 @@ from .models import (
 from .forms import CourseForm, LessonForm
 
 from gamification.models import UserPoints, Badge, UserBadge
+from quizzes.models import Quiz, QuizResult   # 🔥 IMPORTANT
 
 
 # =========================
@@ -56,7 +57,7 @@ def create_course(request):
 
 
 # =========================
-# COURSE DETAIL
+# COURSE DETAIL (🔥 QUIZ FIX)
 # =========================
 @login_required
 def course_detail(request, course_id):
@@ -72,16 +73,27 @@ def course_detail(request, course_id):
         course=course
     ).exists()
 
-    completed = CourseCompletion.objects.filter(
+    course_completed = CourseCompletion.objects.filter(
         student=request.user,
         course=course
     ).exists()
+
+    # 🔥 QUIZ RESULT MAP (lesson_id → QuizResult)
+    quiz_results = {}
+    for lesson in lessons:
+        if hasattr(lesson, 'quiz'):
+            result = QuizResult.objects.filter(
+                student=request.user,
+                quiz=lesson.quiz
+            ).first()
+            quiz_results[lesson.id] = result
 
     return render(request, 'course_detail.html', {
         'course': course,
         'lessons': lessons,
         'enrolled': enrolled,
-        'course_completed': completed
+        'course_completed': course_completed,
+        'quiz_results': quiz_results,   # 🔥 IMPORTANT
     })
 
 
@@ -116,12 +128,10 @@ def add_lesson(request, course_id):
             lesson = form.save(commit=False)
             lesson.course = course
 
-            last_order = (
-                Lesson.objects
-                .filter(course=course)
-                .aggregate(Max('order'))
-                .get('order__max')
-            )
+            last_order = Lesson.objects.filter(
+                course=course
+            ).aggregate(Max('order'))['order__max']
+
             lesson.order = (last_order or 0) + 1
 
             if lesson.content_type == 'PDF':
@@ -159,14 +169,23 @@ def lesson_detail(request, lesson_id):
         lesson=lesson
     )
 
+    # 🔥 Quiz result (if attempted)
+    quiz_result = None
+    if hasattr(lesson, 'quiz'):
+        quiz_result = QuizResult.objects.filter(
+            student=request.user,
+            quiz=lesson.quiz
+        ).first()
+
     return render(request, 'lesson_detail.html', {
         'lesson': lesson,
-        'progress': progress
+        'progress': progress,
+        'quiz_result': quiz_result,  # 🔥 IMPORTANT
     })
 
 
 # =========================
-# COMPLETE LESSON (FIXED)
+# COMPLETE LESSON
 # =========================
 @login_required
 @require_POST
@@ -181,7 +200,6 @@ def complete_lesson(request, lesson_id):
     if progress.completed:
         return redirect('lesson_detail', lesson_id=lesson.id)
 
-    # Mark completed
     progress.completed = True
     progress.completed_at = now()
     progress.save()
@@ -190,10 +208,9 @@ def complete_lesson(request, lesson_id):
     user_points, _ = UserPoints.objects.get_or_create(user=request.user)
     user_points.add_points(10)
 
-    badges = Badge.objects.filter(
+    for badge in Badge.objects.filter(
         points_required__lte=user_points.total_points
-    )
-    for badge in badges:
+    ):
         UserBadge.objects.get_or_create(
             user=request.user,
             badge=badge
@@ -217,17 +234,18 @@ def complete_lesson(request, lesson_id):
 
     return redirect('lesson_detail', lesson_id=lesson.id)
 
+
+# =========================
+# DOWNLOAD CERTIFICATE
+# =========================
 @login_required
 def download_certificate(request, course_id):
     course = get_object_or_404(Course, id=course_id)
 
-    # 🔒 Allow only if completed
-    completed = CourseCompletion.objects.filter(
+    if not CourseCompletion.objects.filter(
         student=request.user,
         course=course
-    ).exists()
-
-    if not completed:
+    ).exists():
         return redirect('course_detail', course_id=course.id)
 
     response = HttpResponse(content_type='application/pdf')
@@ -238,53 +256,35 @@ def download_certificate(request, course_id):
     pdf = canvas.Canvas(response, pagesize=A4)
     width, height = A4
 
-    # ===== Certificate Layout =====
     pdf.setFont("Helvetica-Bold", 28)
-    pdf.drawCentredString(width / 2, height - 1.5 * inch, "Certificate of Completion")
+    pdf.drawCentredString(width / 2, height - 1.5 * inch,
+                          "Certificate of Completion")
 
     pdf.setFont("Helvetica", 16)
-    pdf.drawCentredString(
-        width / 2,
-        height - 2.5 * inch,
-        "This is to certify that"
-    )
+    pdf.drawCentredString(width / 2, height - 2.5 * inch,
+                          "This is to certify that")
 
     pdf.setFont("Helvetica-Bold", 22)
-    pdf.drawCentredString(
-        width / 2,
-        height - 3.3 * inch,
-        request.user.get_full_name() or request.user.username
-    )
+    pdf.drawCentredString(width / 2, height - 3.3 * inch,
+                          request.user.get_full_name()
+                          or request.user.username)
 
     pdf.setFont("Helvetica", 16)
-    pdf.drawCentredString(
-        width / 2,
-        height - 4.2 * inch,
-        "has successfully completed the course"
-    )
+    pdf.drawCentredString(width / 2, height - 4.2 * inch,
+                          "has successfully completed the course")
 
     pdf.setFont("Helvetica-Bold", 20)
-    pdf.drawCentredString(
-        width / 2,
-        height - 5.1 * inch,
-        course.title
-    )
+    pdf.drawCentredString(width / 2, height - 5.1 * inch,
+                          course.title)
 
     pdf.setFont("Helvetica", 14)
-    pdf.drawCentredString(
-        width / 2,
-        height - 6.2 * inch,
-        f"Date: {localdate()}"
-    )
+    pdf.drawCentredString(width / 2, height - 6.2 * inch,
+                          f"Date: {localdate()}")
 
     pdf.setFont("Helvetica-Oblique", 12)
-    pdf.drawCentredString(
-        width / 2,
-        1.5 * inch,
-        "BrainBoost Learning Platform"
-    )
+    pdf.drawCentredString(width / 2, 1.5 * inch,
+                          "BrainBoost Learning Platform")
 
     pdf.showPage()
     pdf.save()
-
     return response

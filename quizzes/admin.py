@@ -1,18 +1,28 @@
 from django.contrib import admin
 from .models import Quiz, Question, Option, QuizResult
 
+
 class OptionInline(admin.TabularInline):
     model = Option
-    extra = 2
+    extra = 4
 
-class QuestionInline(admin.TabularInline):
-    model = Question
-    extra = 1
 
-@admin.register(Quiz)
+class QuestionAdmin(admin.ModelAdmin):
+    inlines = [OptionInline]
+    list_display = ('text', 'quiz')
+    search_fields = ('text',)
+
+
 class QuizAdmin(admin.ModelAdmin):
-    inlines = [QuestionInline]
+    list_display = ('title', 'lesson')
+    search_fields = ('title',)
 
-admin.site.register(Question)
-admin.site.register(Option)
-admin.site.register(QuizResult)
+
+class QuizResultAdmin(admin.ModelAdmin):
+    list_display = ('student', 'quiz', 'score', 'completed_at')
+    list_filter = ('quiz',)
+
+
+admin.site.register(Quiz, QuizAdmin)
+admin.site.register(Question, QuestionAdmin)
+admin.site.register(QuizResult, QuizResultAdmin)

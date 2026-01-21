@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="card shadow-sm">
+    <div class="card-body text-center">
+
+        <h2 class="mb-3">🎉 Quiz Completed</h2>
+
+        <h4 class="mb-2">
+            {{ quiz.title }}
+        </h4>
+
+        <hr>
+
+        <p class="fs-5">
+            ✅ Score:
+            <strong>{{ result.score }} / {{ result.total_questions }}</strong>
+        </p>
+
+        <p class="fs-5">
+            📊 Percentage:
+            <strong>{{ result.percentage }}%</strong>
+        </p>
+
+        {% if result.percentage >= 50 %}
+            <div class="alert alert-success mt-3">
+                🎉 Congratulations! You passed the quiz.
+            </div>
+        {% else %}
+            <div class="alert alert-warning mt-3">
+                ⚠️ You did not pass. Better luck next time!
+            </div>
+        {% endif %}
+
+        <a href="{% url 'lesson_detail' quiz.lesson.id %}"
+           class="btn btn-primary mt-3">
+            ⬅ Back to Lesson
+        </a>
+
+    </div>
+</div>
+
+{% endblock %}

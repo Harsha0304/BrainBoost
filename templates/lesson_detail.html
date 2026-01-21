@@ -25,6 +25,9 @@
 
 <hr>
 
+<!-- =========================
+     LESSON COMPLETION
+========================= -->
 {% if not progress.completed %}
 <form method="post" action="{% url 'complete_lesson' lesson.id %}">
     {% csrf_token %}
@@ -38,8 +41,20 @@
 </div>
 {% endif %}
 
+<!-- =========================
+     QUIZ SECTION
+========================= -->
+{% if lesson.quiz %}
+    <div class="mt-4">
+        <a href="{% url 'take_quiz' lesson.quiz.id %}"
+           class="btn btn-primary">
+            📝 Take Quiz
+        </a>
+    </div>
+{% endif %}
+
 <a href="{% url 'course_detail' lesson.course.id %}"
-   class="btn btn-secondary mt-3">
+   class="btn btn-secondary mt-4">
     ⬅ Back to Course
 </a>
 

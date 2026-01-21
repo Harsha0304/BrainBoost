@@ -2,88 +2,122 @@
 {% block content %}
 
 <style>
-.course-wrapper {
-    max-width: 520px;
-    margin: 60px auto;
-}
-
-.course-card {
-    background: var(--card, #ffffff);
-    border-radius: 16px;
-    padding: 28px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-    animation: fadeSlide 0.7s ease;
-}
-
-@keyframes fadeSlide {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
+    .lesson-badge {
+        font-size: 12px;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.course-card h2 {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.course-card .form-label {
-    font-weight: 500;
-}
-
-.course-card input,
-.course-card textarea {
-    border-radius: 8px;
-    padding: 10px;
-}
-
-.course-actions {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 25px;
-}
 </style>
 
-<div class="course-wrapper">
-    <div class="course-card">
-        <h2>➕ Add New Course</h2>
+<h2>{{ course.title }}</h2>
+<p>{{ course.description }}</p>
 
-        <form method="post">
-            {% csrf_token %}
-
-            <div class="mb-3">
-                <label class="form-label">Course Title</label>
-                {{ form.title }}
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Description</label>
-                {{ form.description }}
-            </div>
-
-            <div class="form-check mb-3">
-                {{ form.is_active }}
-                <label class="form-check-label"
-                       for="{{ form.is_active.id_for_label }}">
-                    Active
-                </label>
-            </div>
-
-            <div class="course-actions">
-                <button class="btn btn-primary">
-                    Create Course
-                </button>
-                <a href="{% url 'courses' %}"
-                   class="btn btn-outline-secondary">
-                    Cancel
-                </a>
-            </div>
-        </form>
-    </div>
+<!-- =========================
+     COURSE COMPLETION
+========================= -->
+{% if course_completed %}
+<div class="alert alert-success d-flex justify-content-between align-items-center">
+    <span>🎓 You have successfully completed this course!</span>
+    <a href="{% url 'download_certificate' course.id %}"
+       class="btn btn-sm btn-outline-success">
+        📄 Download Certificate
+    </a>
 </div>
+{% endif %}
+
+<!-- =========================
+     ADMIN ACTIONS
+========================= -->
+{% if user.role == 'ADMIN' %}
+<div class="mb-3">
+    <a href="{% url 'add_lesson' course.id %}" class="btn btn-success">
+        ➕ Add Lesson
+    </a>
+</div>
+{% endif %}
+
+<!-- =========================
+     ENROLLMENT STATUS
+========================= -->
+{% if user.role != 'ADMIN' %}
+    {% if not enrolled %}
+        <a href="{% url 'enroll_course' course.id %}"
+           class="btn btn-primary mb-3">
+            📘 Enroll in Course
+        </a>
+    {% else %}
+        <div class="alert alert-success mb-3">
+            ✅ You are enrolled in this course
+        </div>
+    {% endif %}
+{% endif %}
+
+<hr>
+
+<h4>Lessons</h4>
+
+<ul class="list-group">
+
+{% if enrolled or user.role == 'ADMIN' %}
+    {% for lesson in lessons %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+
+        <div>
+            <strong>{{ lesson.order }}.</strong> {{ lesson.title }}
+
+            {% if lesson.quiz %}
+                <span class="badge bg-info lesson-badge ms-2">Quiz</span>
+            {% endif %}
+        </div>
+
+        <!-- =========================
+             ADMIN CONTROLS
+        ========================= -->
+        {% if user.role == 'ADMIN' %}
+        <div class="d-flex gap-2">
+
+            {% if lesson.quiz %}
+                <a href="{% url 'add_question' lesson.quiz.id %}"
+                   class="btn btn-sm btn-outline-warning">
+                    ✏ Manage Quiz
+                </a>
+            {% else %}
+                <a href="{% url 'create_quiz' lesson.id %}"
+                   class="btn btn-sm btn-outline-success">
+                    ➕ Add Quiz
+                </a>
+            {% endif %}
+
+            <a href="{% url 'lesson_detail' lesson.id %}"
+               class="btn btn-sm btn-outline-primary">
+                Open
+            </a>
+        </div>
+
+        <!-- =========================
+             STUDENT CONTROLS
+        ========================= -->
+        {% else %}
+        <a href="{% url 'lesson_detail' lesson.id %}"
+           class="btn btn-sm btn-outline-primary">
+            Open
+        </a>
+        {% endif %}
+
+    </li>
+    {% empty %}
+    <li class="list-group-item">
+        No lessons added yet.
+    </li>
+    {% endfor %}
+{% else %}
+    <li class="list-group-item text-muted">
+        🔒 Enroll in this course to access lessons.
+    </li>
+{% endif %}
+
+</ul>
+
+<a href="{% url 'courses' %}" class="btn btn-secondary mt-3">
+    ⬅ Back to Courses
+</a>
 
 {% endblock %}

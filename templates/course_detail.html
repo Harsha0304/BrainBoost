@@ -2,8 +2,18 @@
 {% block content %}
 
 <style>
+    .lesson-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
     .lesson-badge {
         font-size: 12px;
+    }
+    .quiz-result {
+        font-size: 14px;
+        font-weight: 600;
+        color: #0d6efd;
     }
 </style>
 
@@ -24,8 +34,7 @@
 {% endif %}
 
 <!-- =========================
-     ADMIN ACTIONS (COURSE)
-     (ONLY VALID ACTIONS)
+     ADMIN ACTIONS
 ========================= -->
 {% if user.role == 'ADMIN' %}
 <div class="mb-3">
@@ -35,63 +44,81 @@
 </div>
 {% endif %}
 
-<!-- =========================
-     ENROLLMENT STATUS (STUDENT)
-========================= -->
-{% if user.role != 'ADMIN' %}
-    {% if not enrolled %}
-        <a href="{% url 'enroll_course' course.id %}"
-           class="btn btn-primary mb-3">
-            📘 Enroll in Course
-        </a>
-    {% else %}
-        <div class="alert alert-success mb-3">
-            ✅ You are enrolled in this course
-        </div>
-    {% endif %}
-{% endif %}
-
 <hr>
 
 <h4>Lessons</h4>
 
 <ul class="list-group">
 
-{% if enrolled or user.role == 'ADMIN' %}
-    {% for lesson in lessons %}
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-        <span>
-            <strong>{{ lesson.order }}.</strong>
-            {{ lesson.title }}
+{% for lesson in lessons %}
+<li class="list-group-item d-flex justify-content-between align-items-center">
 
-            {% if not lesson.is_active %}
-            <span class="badge bg-secondary lesson-badge">
-                Inactive
-            </span>
-            {% endif %}
-        </span>
+    <span>
+        <strong>{{ lesson.order }}.</strong>
+        {{ lesson.title }}
 
-        {% if user.role != 'ADMIN' %}
+        {% if not lesson.is_active %}
+            <span class="badge bg-secondary lesson-badge">Inactive</span>
+        {% endif %}
+    </span>
+
+    <div class="lesson-actions">
+
+        <!-- OPEN LESSON -->
         <a href="{% url 'lesson_detail' lesson.id %}"
            class="btn btn-sm btn-outline-primary">
-            Open
+            📘 Open
         </a>
+
+        <!-- ADMIN QUIZ CONTROLS -->
+        {% if user.role == 'ADMIN' %}
+            {% if lesson.quiz %}
+                <a href="{% url 'add_question' lesson.quiz.id %}"
+                   class="btn btn-sm btn-outline-warning">
+                    🧠 Manage Quiz
+                </a>
+            {% else %}
+                <a href="{% url 'create_quiz' lesson.id %}"
+                   class="btn btn-sm btn-outline-success">
+                    ➕ Create Quiz
+                </a>
+            {% endif %}
         {% endif %}
-    </li>
-    {% empty %}
-    <li class="list-group-item">
-        No lessons added yet.
-    </li>
-    {% endfor %}
-{% else %}
-    <li class="list-group-item text-muted">
-        🔒 Enroll in this course to access lessons.
-    </li>
-{% endif %}
+
+        <!-- STUDENT QUIZ LOGIC -->
+        {% if user.role != 'ADMIN' and lesson.quiz %}
+
+            {% if lesson.id in quiz_results %}
+                {% with result=quiz_results|dictsort:"0" %}
+                {% endwith %}
+                <span class="quiz-result">
+                    📊 Score:
+                    {{ quiz_results[lesson.id].score }}
+                    /
+                    {{ quiz_results[lesson.id].total_questions }}
+                    ({{ quiz_results[lesson.id].percentage }}%)
+                </span>
+            {% else %}
+                <a href="{% url 'take_quiz' lesson.quiz.id %}"
+                   class="btn btn-sm btn-outline-success">
+                    📝 Take Quiz
+                </a>
+            {% endif %}
+
+        {% endif %}
+
+    </div>
+
+</li>
+{% empty %}
+<li class="list-group-item">
+    No lessons added yet.
+</li>
+{% endfor %}
 
 </ul>
 
-<a href="{% url 'courses' %}" class="btn btn-secondary mt-3">
+<a href="{% url 'courses' %}" class="btn btn-secondary mt-4">
     ⬅ Back to Courses
 </a>
 

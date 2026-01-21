@@ -49,6 +49,7 @@ urlpatterns = [
     ),
     path('register/', include('users.urls')),
     path('courses/', include('courses.urls')),
+    path('quiz/', include('quizzes.urls')),
     path('leaderboard/', leaderboard, name='leaderboard'),
     path('', dashboard, name='dashboard'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
