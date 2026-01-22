@@ -10,38 +10,51 @@
     .lesson-badge {
         font-size: 12px;
     }
-    .quiz-result {
-        font-size: 14px;
-        font-weight: 600;
-        color: #0d6efd;
-    }
 </style>
 
 <h2>{{ course.title }}</h2>
 <p>{{ course.description }}</p>
 
 <!-- =========================
-     COURSE COMPLETION
+     ADMIN ACTIONS (COURSE)
 ========================= -->
-{% if course_completed %}
-<div class="alert alert-success d-flex justify-content-between align-items-center">
-    <span>🎓 You have successfully completed this course!</span>
-    <a href="{% url 'download_certificate' course.id %}"
-       class="btn btn-sm btn-outline-success">
-        📄 Download Certificate
+{% if user.role == 'ADMIN' %}
+<div class="mb-3 d-flex gap-2 flex-wrap">
+    <a href="{% url 'add_lesson' course.id %}" class="btn btn-success">
+        ➕ Add Lesson
     </a>
+
+    {% if course.is_active %}
+    <form method="post" action="{% url 'toggle_course' course.id %}">
+        {% csrf_token %}
+        <button class="btn btn-outline-danger">
+            Deactivate Course
+        </button>
+    </form>
+    {% else %}
+    <form method="post" action="{% url 'toggle_course' course.id %}">
+        {% csrf_token %}
+        <button class="btn btn-outline-success">
+            Activate Course
+        </button>
+    </form>
+    {% endif %}
 </div>
 {% endif %}
 
 <!-- =========================
-     ADMIN ACTIONS
+     ENROLL STATUS (STUDENT)
 ========================= -->
-{% if user.role == 'ADMIN' %}
-<div class="mb-3">
-    <a href="{% url 'add_lesson' course.id %}" class="btn btn-success">
-        ➕ Add Lesson
-    </a>
-</div>
+{% if user.role != 'ADMIN' %}
+    {% if not enrolled %}
+        <a href="{% url 'enroll_course' course.id %}" class="btn btn-primary mb-3">
+            📘 Enroll in Course
+        </a>
+    {% else %}
+        <div class="alert alert-success mb-3">
+            ✅ You are enrolled in this course
+        </div>
+    {% endif %}
 {% endif %}
 
 <hr>
@@ -50,6 +63,7 @@
 
 <ul class="list-group">
 
+{% if enrolled or user.role == 'ADMIN' %}
 {% for lesson in lessons %}
 <li class="list-group-item d-flex justify-content-between align-items-center">
 
@@ -58,20 +72,40 @@
         {{ lesson.title }}
 
         {% if not lesson.is_active %}
-            <span class="badge bg-secondary lesson-badge">Inactive</span>
+            <span class="badge bg-secondary lesson-badge">
+                Inactive
+            </span>
         {% endif %}
     </span>
 
     <div class="lesson-actions">
 
-        <!-- OPEN LESSON -->
-        <a href="{% url 'lesson_detail' lesson.id %}"
-           class="btn btn-sm btn-outline-primary">
-            📘 Open
-        </a>
-
-        <!-- ADMIN QUIZ CONTROLS -->
+        <!-- =========================
+             ADMIN CONTROLS
+        ========================= -->
         {% if user.role == 'ADMIN' %}
+
+            <a href="{% url 'edit_lesson' lesson.id %}"
+               class="btn btn-sm btn-outline-secondary">
+                ✏ Edit
+            </a>
+
+            {% if lesson.is_active %}
+                <form method="post" action="{% url 'toggle_lesson' lesson.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-outline-danger">
+                        Deactivate
+                    </button>
+                </form>
+            {% else %}
+                <form method="post" action="{% url 'toggle_lesson' lesson.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-outline-success">
+                        Activate
+                    </button>
+                </form>
+            {% endif %}
+
             {% if lesson.quiz %}
                 <a href="{% url 'add_question' lesson.quiz.id %}"
                    class="btn btn-sm btn-outline-warning">
@@ -83,26 +117,38 @@
                     ➕ Create Quiz
                 </a>
             {% endif %}
-        {% endif %}
 
-        <!-- STUDENT QUIZ LOGIC -->
-        {% if user.role != 'ADMIN' and lesson.quiz %}
+        {% else %}
+        <!-- =========================
+             STUDENT CONTROLS
+        ========================= -->
 
-            {% if lesson.id in quiz_results %}
-                {% with result=quiz_results|dictsort:"0" %}
+            <a href="{% url 'lesson_detail' lesson.id %}"
+               class="btn btn-sm btn-outline-primary">
+                📘 Open
+            </a>
+
+            {% if lesson.quiz %}
+                {% with quiz_results.lesson.id as result %}
                 {% endwith %}
-                <span class="quiz-result">
-                    📊 Score:
-                    {{ quiz_results[lesson.id].score }}
-                    /
-                    {{ quiz_results[lesson.id].total_questions }}
-                    ({{ quiz_results[lesson.id].percentage }}%)
-                </span>
-            {% else %}
-                <a href="{% url 'take_quiz' lesson.quiz.id %}"
-                   class="btn btn-sm btn-outline-success">
-                    📝 Take Quiz
-                </a>
+
+                {% if quiz_results %}
+                    {% for lid, result in quiz_results.items %}
+                        {% if lid == lesson.id and result %}
+                            <span class="badge bg-info">
+                                📊 {{ result.score }}/{{ result.total_questions }}
+                                ({{ result.percentage }}%)
+                            </span>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+
+                {% if not quiz_results or not quiz_results.lesson.id %}
+                    <a href="{% url 'take_quiz' lesson.quiz.id %}"
+                       class="btn btn-sm btn-outline-success">
+                        📝 Take Quiz
+                    </a>
+                {% endif %}
             {% endif %}
 
         {% endif %}
@@ -115,6 +161,11 @@
     No lessons added yet.
 </li>
 {% endfor %}
+{% else %}
+<li class="list-group-item text-muted">
+    🔒 Enroll in this course to access lessons.
+</li>
+{% endif %}
 
 </ul>
 

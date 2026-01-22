@@ -12,13 +12,18 @@ User = settings.AUTH_USER_MODEL
 class Course(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
+
     created_by = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='created_courses'
+        User,
+        on_delete=models.CASCADE,
+        related_name='created_courses'
     )
+
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def total_lessons(self):
+        """Return number of active lessons"""
         return self.lessons.filter(is_active=True).count()
 
     def __str__(self):
@@ -35,8 +40,11 @@ class Lesson(models.Model):
     )
 
     course = models.ForeignKey(
-        Course, on_delete=models.CASCADE, related_name='lessons'
+        Course,
+        on_delete=models.CASCADE,
+        related_name='lessons'
     )
+
     title = models.CharField(max_length=200)
     content = models.TextField(blank=True)
     order = models.PositiveIntegerField()
@@ -77,7 +85,7 @@ class Lesson(models.Model):
             if self.pdf_file:
                 raise ValidationError('Remove PDF file for Video lessons.')
             if not self.video_file.name.lower().endswith(('.mp4', '.webm')):
-                raise ValidationError('Only MP4/WebM videos are allowed.')
+                raise ValidationError('Only MP4 / WebM videos are allowed.')
 
     def __str__(self):
         return self.title
@@ -91,29 +99,47 @@ class Lesson(models.Model):
 # ENROLLMENT
 # =========================
 class Enrollment(models.Model):
-    student = models.ForeignKey(User, on_delete=models.CASCADE)
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    student = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE
+    )
     enrolled_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('student', 'course')
+
+    def __str__(self):
+        return f"{self.student} enrolled in {self.course}"
 
 
 # =========================
 # LESSON PROGRESS
 # =========================
 class LessonProgress(models.Model):
-    student = models.ForeignKey(User, on_delete=models.CASCADE)
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    student = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.CASCADE
+    )
     completed = models.BooleanField(default=False)
     completed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ('student', 'lesson')
 
+    def __str__(self):
+        return f"{self.student} - {self.lesson} ({'Done' if self.completed else 'Pending'})"
+
 
 # =========================
-# COURSE COMPLETION (NEW)
+# COURSE COMPLETION (FINAL)
 # =========================
 class CourseCompletion(models.Model):
     student = models.ForeignKey(
@@ -133,20 +159,3 @@ class CourseCompletion(models.Model):
 
     def __str__(self):
         return f"{self.student} completed {self.course}"
-
-class CourseCompletion(models.Model):
-    student = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
-    )
-    course = models.ForeignKey(
-        Course,
-        on_delete=models.CASCADE
-    )
-    completed_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('student', 'course')
-
-    def __str__(self):
-        return f"{self.student} - {self.course}"

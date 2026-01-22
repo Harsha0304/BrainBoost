@@ -19,7 +19,7 @@ from .models import (
 from .forms import CourseForm, LessonForm
 
 from gamification.models import UserPoints, Badge, UserBadge
-from quizzes.models import Quiz, QuizResult   # 🔥 IMPORTANT
+from quizzes.models import QuizResult
 
 
 # =========================
@@ -27,37 +27,30 @@ from quizzes.models import Quiz, QuizResult   # 🔥 IMPORTANT
 # =========================
 @login_required
 def course_list(request):
-    if request.user.role == 'ADMIN':
-        courses = Course.objects.all()
-    else:
-        courses = Course.objects.filter(is_active=True)
-
+    courses = Course.objects.all() if request.user.role == 'ADMIN' else Course.objects.filter(is_active=True)
     return render(request, 'courses.html', {'courses': courses})
 
 
 # =========================
-# CREATE COURSE (ADMIN)
+# CREATE COURSE
 # =========================
 @login_required
 def create_course(request):
     if request.user.role != 'ADMIN':
         return redirect('courses')
 
-    if request.method == 'POST':
-        form = CourseForm(request.POST)
-        if form.is_valid():
-            course = form.save(commit=False)
-            course.created_by = request.user
-            course.save()
-            return redirect('courses')
-    else:
-        form = CourseForm()
+    form = CourseForm(request.POST or None)
+    if form.is_valid():
+        course = form.save(commit=False)
+        course.created_by = request.user
+        course.save()
+        return redirect('courses')
 
     return render(request, 'create_course.html', {'form': form})
 
 
 # =========================
-# COURSE DETAIL (🔥 QUIZ FIX)
+# COURSE DETAIL
 # =========================
 @login_required
 def course_detail(request, course_id):
@@ -78,22 +71,20 @@ def course_detail(request, course_id):
         course=course
     ).exists()
 
-    # 🔥 QUIZ RESULT MAP (lesson_id → QuizResult)
-    quiz_results = {}
+    # 🔥 ATTACH QUIZ RESULT DIRECTLY TO LESSON
     for lesson in lessons:
+        lesson.quiz_result = None
         if hasattr(lesson, 'quiz'):
-            result = QuizResult.objects.filter(
+            lesson.quiz_result = QuizResult.objects.filter(
                 student=request.user,
                 quiz=lesson.quiz
             ).first()
-            quiz_results[lesson.id] = result
 
     return render(request, 'course_detail.html', {
         'course': course,
         'lessons': lessons,
         'enrolled': enrolled,
         'course_completed': course_completed,
-        'quiz_results': quiz_results,   # 🔥 IMPORTANT
     })
 
 
@@ -103,17 +94,12 @@ def course_detail(request, course_id):
 @login_required
 def enroll_course(request, course_id):
     course = get_object_or_404(Course, id=course_id, is_active=True)
-
-    Enrollment.objects.get_or_create(
-        student=request.user,
-        course=course
-    )
-
+    Enrollment.objects.get_or_create(student=request.user, course=course)
     return redirect('course_detail', course_id=course.id)
 
 
 # =========================
-# ADD LESSON (ADMIN)
+# ADD LESSON
 # =========================
 @login_required
 def add_lesson(request, course_id):
@@ -121,34 +107,93 @@ def add_lesson(request, course_id):
         return redirect('courses')
 
     course = get_object_or_404(Course, id=course_id)
+    form = LessonForm(request.POST or None, request.FILES or None)
 
-    if request.method == 'POST':
-        form = LessonForm(request.POST, request.FILES)
-        if form.is_valid():
-            lesson = form.save(commit=False)
-            lesson.course = course
+    if form.is_valid():
+        lesson = form.save(commit=False)
+        lesson.course = course
+        lesson.order = (Lesson.objects.filter(course=course).aggregate(Max('order'))['order__max'] or 0) + 1
 
-            last_order = Lesson.objects.filter(
-                course=course
-            ).aggregate(Max('order'))['order__max']
+        if lesson.content_type == 'PDF':
+            lesson.video_file = None
+        else:
+            lesson.pdf_file = None
 
-            lesson.order = (last_order or 0) + 1
+        lesson.full_clean()
+        lesson.save()
+        return redirect('course_detail', course_id=course.id)
 
-            if lesson.content_type == 'PDF':
-                lesson.video_file = None
-            elif lesson.content_type == 'VIDEO':
-                lesson.pdf_file = None
+    return render(request, 'add_lesson.html', {'form': form, 'course': course})
 
-            lesson.full_clean()
-            lesson.save()
-            return redirect('course_detail', course_id=course.id)
-    else:
-        form = LessonForm()
 
-    return render(request, 'add_lesson.html', {
-        'form': form,
-        'course': course
-    })
+# =========================
+# EDIT COURSE ✅ (FIXED)
+# =========================
+@login_required
+def edit_course(request, course_id):
+    if request.user.role != 'ADMIN':
+        return redirect('courses')
+
+    course = get_object_or_404(Course, id=course_id)
+    form = CourseForm(request.POST or None, instance=course)
+
+    if form.is_valid():
+        form.save()
+        return redirect('course_detail', course_id=course.id)
+
+    return render(request, 'edit_course.html', {'form': form, 'course': course})
+
+
+# =========================
+# TOGGLE COURSE ✅ (FIXED)
+# =========================
+@login_required
+@require_POST
+def toggle_course(request, course_id):
+    if request.user.role != 'ADMIN':
+        return redirect('courses')
+
+    course = get_object_or_404(Course, id=course_id)
+    course.is_active = not course.is_active
+    course.save(update_fields=['is_active'])
+    return redirect('course_detail', course_id=course.id)
+
+
+# =========================
+# EDIT LESSON ✅ (FIXED)
+# =========================
+@login_required
+def edit_lesson(request, lesson_id):
+    if request.user.role != 'ADMIN':
+        return redirect('courses')
+
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    form = LessonForm(request.POST or None, request.FILES or None, instance=lesson)
+
+    if form.is_valid():
+        updated = form.save(commit=False)
+        updated.course = lesson.course
+        updated.order = lesson.order
+        updated.full_clean()
+        updated.save()
+        return redirect('course_detail', course_id=lesson.course.id)
+
+    return render(request, 'edit_lesson.html', {'form': form, 'lesson': lesson})
+
+
+# =========================
+# TOGGLE LESSON ✅ (FIXED)
+# =========================
+@login_required
+@require_POST
+def toggle_lesson(request, lesson_id):
+    if request.user.role != 'ADMIN':
+        return redirect('courses')
+
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    lesson.is_active = not lesson.is_active
+    lesson.save(update_fields=['is_active'])
+    return redirect('course_detail', course_id=lesson.course.id)
 
 
 # =========================
@@ -158,29 +203,19 @@ def add_lesson(request, course_id):
 def lesson_detail(request, lesson_id):
     lesson = get_object_or_404(Lesson, id=lesson_id, is_active=True)
 
-    if not Enrollment.objects.filter(
-        student=request.user,
-        course=lesson.course
-    ).exists():
+    if not Enrollment.objects.filter(student=request.user, course=lesson.course).exists():
         return redirect('course_detail', course_id=lesson.course.id)
 
-    progress, _ = LessonProgress.objects.get_or_create(
-        student=request.user,
-        lesson=lesson
-    )
+    progress, _ = LessonProgress.objects.get_or_create(student=request.user, lesson=lesson)
 
-    # 🔥 Quiz result (if attempted)
-    quiz_result = None
-    if hasattr(lesson, 'quiz'):
-        quiz_result = QuizResult.objects.filter(
-            student=request.user,
-            quiz=lesson.quiz
-        ).first()
+    quiz_result = QuizResult.objects.filter(
+        student=request.user, quiz=lesson.quiz
+    ).first() if hasattr(lesson, 'quiz') else None
 
     return render(request, 'lesson_detail.html', {
         'lesson': lesson,
         'progress': progress,
-        'quiz_result': quiz_result,  # 🔥 IMPORTANT
+        'quiz_result': quiz_result
     })
 
 
@@ -191,46 +226,27 @@ def lesson_detail(request, lesson_id):
 @require_POST
 def complete_lesson(request, lesson_id):
     lesson = get_object_or_404(Lesson, id=lesson_id)
+    progress, _ = LessonProgress.objects.get_or_create(student=request.user, lesson=lesson)
 
-    progress, _ = LessonProgress.objects.get_or_create(
-        student=request.user,
-        lesson=lesson
-    )
+    if not progress.completed:
+        progress.completed = True
+        progress.completed_at = now()
+        progress.save()
 
-    if progress.completed:
-        return redirect('lesson_detail', lesson_id=lesson.id)
+        user_points, _ = UserPoints.objects.get_or_create(user=request.user)
+        user_points.add_points(10)
 
-    progress.completed = True
-    progress.completed_at = now()
-    progress.save()
+        for badge in Badge.objects.filter(points_required__lte=user_points.total_points):
+            UserBadge.objects.get_or_create(user=request.user, badge=badge)
 
-    # 🎯 Gamification
-    user_points, _ = UserPoints.objects.get_or_create(user=request.user)
-    user_points.add_points(10)
-
-    for badge in Badge.objects.filter(
-        points_required__lte=user_points.total_points
-    ):
-        UserBadge.objects.get_or_create(
-            user=request.user,
-            badge=badge
-        )
-
-    # 🎓 Course completion
-    course = lesson.course
-    total = course.lessons.filter(is_active=True).count()
+    total = lesson.course.lessons.filter(is_active=True).count()
     completed = LessonProgress.objects.filter(
-        student=request.user,
-        lesson__course=course,
-        completed=True
+        student=request.user, lesson__course=lesson.course, completed=True
     ).count()
 
-    if total > 0 and completed == total:
-        CourseCompletion.objects.get_or_create(
-            student=request.user,
-            course=course
-        )
-        return redirect('course_detail', course_id=course.id)
+    if total == completed:
+        CourseCompletion.objects.get_or_create(student=request.user, course=lesson.course)
+        return redirect('course_detail', course_id=lesson.course.id)
 
     return redirect('lesson_detail', lesson_id=lesson.id)
 
@@ -242,48 +258,33 @@ def complete_lesson(request, lesson_id):
 def download_certificate(request, course_id):
     course = get_object_or_404(Course, id=course_id)
 
-    if not CourseCompletion.objects.filter(
-        student=request.user,
-        course=course
-    ).exists():
+    if not CourseCompletion.objects.filter(student=request.user, course=course).exists():
         return redirect('course_detail', course_id=course.id)
 
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = (
-        f'attachment; filename="{course.title}_certificate.pdf"'
-    )
+    response['Content-Disposition'] = f'attachment; filename="{course.title}_certificate.pdf"'
 
     pdf = canvas.Canvas(response, pagesize=A4)
     width, height = A4
 
     pdf.setFont("Helvetica-Bold", 28)
-    pdf.drawCentredString(width / 2, height - 1.5 * inch,
-                          "Certificate of Completion")
+    pdf.drawCentredString(width / 2, height - 1.5 * inch, "Certificate of Completion")
 
     pdf.setFont("Helvetica", 16)
-    pdf.drawCentredString(width / 2, height - 2.5 * inch,
-                          "This is to certify that")
+    pdf.drawCentredString(width / 2, height - 2.5 * inch, "This is to certify that")
 
     pdf.setFont("Helvetica-Bold", 22)
     pdf.drawCentredString(width / 2, height - 3.3 * inch,
-                          request.user.get_full_name()
-                          or request.user.username)
+                          request.user.get_full_name() or request.user.username)
 
     pdf.setFont("Helvetica", 16)
-    pdf.drawCentredString(width / 2, height - 4.2 * inch,
-                          "has successfully completed the course")
+    pdf.drawCentredString(width / 2, height - 4.2 * inch, "has successfully completed the course")
 
     pdf.setFont("Helvetica-Bold", 20)
-    pdf.drawCentredString(width / 2, height - 5.1 * inch,
-                          course.title)
+    pdf.drawCentredString(width / 2, height - 5.1 * inch, course.title)
 
     pdf.setFont("Helvetica", 14)
-    pdf.drawCentredString(width / 2, height - 6.2 * inch,
-                          f"Date: {localdate()}")
-
-    pdf.setFont("Helvetica-Oblique", 12)
-    pdf.drawCentredString(width / 2, 1.5 * inch,
-                          "BrainBoost Learning Platform")
+    pdf.drawCentredString(width / 2, height - 6.2 * inch, f"Date: {localdate()}")
 
     pdf.showPage()
     pdf.save()
