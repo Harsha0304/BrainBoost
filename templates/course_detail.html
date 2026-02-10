@@ -129,25 +129,22 @@
             </a>
 
             {% if lesson.quiz %}
-                {% with quiz_results.lesson.id as result %}
-                {% endwith %}
-
                 {% if quiz_results %}
                     {% for lid, result in quiz_results.items %}
-                        {% if lid == lesson.id and result %}
-                            <span class="badge bg-info">
-                                📊 {{ result.score }}/{{ result.total_questions }}
-                                ({{ result.percentage }}%)
-                            </span>
+                        {% if lid == lesson.id %}
+                            {% if result %}
+                                <span class="badge bg-info">
+                                    📊 {{ result.score }}/{{ result.total_questions }}
+                                    ({{ result.percentage }}%)
+                                </span>
+                            {% else %}
+                                <a href="{% url 'take_quiz' lesson.quiz.id %}"
+                                   class="btn btn-sm btn-outline-success">
+                                    📝 Take Quiz
+                                </a>
+                            {% endif %}
                         {% endif %}
                     {% endfor %}
-                {% endif %}
-
-                {% if not quiz_results or not quiz_results.lesson.id %}
-                    <a href="{% url 'take_quiz' lesson.quiz.id %}"
-                       class="btn btn-sm btn-outline-success">
-                        📝 Take Quiz
-                    </a>
                 {% endif %}
             {% endif %}
 

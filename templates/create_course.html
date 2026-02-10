@@ -1,123 +1,20 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<style>
-    .lesson-badge {
-        font-size: 12px;
-    }
-</style>
+<h2>Create New Course</h2>
 
-<h2>{{ course.title }}</h2>
-<p>{{ course.description }}</p>
+<form method="post">
+    {% csrf_token %}
 
-<!-- =========================
-     COURSE COMPLETION
-========================= -->
-{% if course_completed %}
-<div class="alert alert-success d-flex justify-content-between align-items-center">
-    <span>🎓 You have successfully completed this course!</span>
-    <a href="{% url 'download_certificate' course.id %}"
-       class="btn btn-sm btn-outline-success">
-        📄 Download Certificate
+    {{ form.as_p }}
+
+    <button type="submit" class="btn btn-success">
+        ✅ Create Course
+    </button>
+
+    <a href="{% url 'courses' %}" class="btn btn-secondary ms-2">
+        ⬅ Cancel
     </a>
-</div>
-{% endif %}
-
-<!-- =========================
-     ADMIN ACTIONS
-========================= -->
-{% if user.role == 'ADMIN' %}
-<div class="mb-3">
-    <a href="{% url 'add_lesson' course.id %}" class="btn btn-success">
-        ➕ Add Lesson
-    </a>
-</div>
-{% endif %}
-
-<!-- =========================
-     ENROLLMENT STATUS
-========================= -->
-{% if user.role != 'ADMIN' %}
-    {% if not enrolled %}
-        <a href="{% url 'enroll_course' course.id %}"
-           class="btn btn-primary mb-3">
-            📘 Enroll in Course
-        </a>
-    {% else %}
-        <div class="alert alert-success mb-3">
-            ✅ You are enrolled in this course
-        </div>
-    {% endif %}
-{% endif %}
-
-<hr>
-
-<h4>Lessons</h4>
-
-<ul class="list-group">
-
-{% if enrolled or user.role == 'ADMIN' %}
-    {% for lesson in lessons %}
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-
-        <div>
-            <strong>{{ lesson.order }}.</strong> {{ lesson.title }}
-
-            {% if lesson.quiz %}
-                <span class="badge bg-info lesson-badge ms-2">Quiz</span>
-            {% endif %}
-        </div>
-
-        <!-- =========================
-             ADMIN CONTROLS
-        ========================= -->
-        {% if user.role == 'ADMIN' %}
-        <div class="d-flex gap-2">
-
-            {% if lesson.quiz %}
-                <a href="{% url 'add_question' lesson.quiz.id %}"
-                   class="btn btn-sm btn-outline-warning">
-                    ✏ Manage Quiz
-                </a>
-            {% else %}
-                <a href="{% url 'create_quiz' lesson.id %}"
-                   class="btn btn-sm btn-outline-success">
-                    ➕ Add Quiz
-                </a>
-            {% endif %}
-
-            <a href="{% url 'lesson_detail' lesson.id %}"
-               class="btn btn-sm btn-outline-primary">
-                Open
-            </a>
-        </div>
-
-        <!-- =========================
-             STUDENT CONTROLS
-        ========================= -->
-        {% else %}
-        <a href="{% url 'lesson_detail' lesson.id %}"
-           class="btn btn-sm btn-outline-primary">
-            Open
-        </a>
-        {% endif %}
-
-    </li>
-    {% empty %}
-    <li class="list-group-item">
-        No lessons added yet.
-    </li>
-    {% endfor %}
-{% else %}
-    <li class="list-group-item text-muted">
-        🔒 Enroll in this course to access lessons.
-    </li>
-{% endif %}
-
-</ul>
-
-<a href="{% url 'courses' %}" class="btn btn-secondary mt-3">
-    ⬅ Back to Courses
-</a>
+</form>
 
 {% endblock %}
