@@ -39,6 +39,23 @@
         </button>
     </form>
     {% endif %}
+
+    <!-- ✅ DELETE BUTTON -->
+    <form method="post" action="{% url 'delete_course' course.id %}"
+          onsubmit="return confirm('Are you sure you want to delete this course? This cannot be undone.');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">
+            Delete Course
+        </button>
+    </form>
+
+    <form method="post" action="{% url 'edit_course' course.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary">
+            Edit Course
+        </button>
+    </form>
+
 </div>
 {% endif %}
 

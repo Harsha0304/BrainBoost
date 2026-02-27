@@ -4,7 +4,8 @@ from django.utils.timezone import now, localdate
 from django.views.decorators.http import require_POST
 from django.db.models import Max
 from django.http import HttpResponse
-
+from django.core.mail import send_mail
+from django.conf import settings
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
@@ -52,6 +53,24 @@ def create_course(request):
 
     return render(request, 'create_course.html', {'form': form})
 
+# =========================
+# DELETE COURSE (ADMIN)
+# =========================
+@login_required
+def delete_course(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+
+    # Only ADMIN can delete
+    if request.user.role != 'ADMIN':
+        messages.error(request, "You are not authorized to delete this course.")
+        return redirect('courses')
+
+    if request.method == "POST":
+        course.delete()
+        messages.success(request, "Course deleted successfully.")
+        return redirect('courses')
+
+    return redirect('course_detail', course_id=course.id)
 
 # =========================
 # COURSE DETAIL (QUIZ + STATUS)
@@ -98,10 +117,37 @@ def course_detail(request, course_id):
 @login_required
 def enroll_course(request, course_id):
     course = get_object_or_404(Course, id=course_id, is_active=True)
-    Enrollment.objects.get_or_create(
+
+    enrollment, created = Enrollment.objects.get_or_create(
         student=request.user,
         course=course
     )
+
+    # Send email only if newly enrolled
+    if created:
+        subject = "Course Enrollment Confirmation"
+
+        message = f"""
+        Hello {request.user.first_name},
+
+        You have successfully enrolled in the course:
+
+        Course Name: {course.title}
+
+        You can now access all lessons and quizzes.
+
+        Happy Learning!
+        Your Learning Platform Team
+        """
+
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [request.user.email],
+            fail_silently=False,
+        )
+
     return redirect('course_detail', course_id=course.id)
 
 
@@ -148,17 +194,19 @@ def edit_course(request, course_id):
         return redirect('courses')
 
     course = get_object_or_404(Course, id=course_id)
-    form = CourseForm(request.POST or None, instance=course)
 
-    if form.is_valid():
-        form.save()
-        return redirect('course_detail', course_id=course.id)
+    if request.method == "POST":
+        form = CourseForm(request.POST, instance=course)
+        if form.is_valid():
+            form.save()
+            return redirect('course_detail', course_id=course.id)
+    else:
+        form = CourseForm(instance=course)
 
     return render(request, 'edit_course.html', {
         'form': form,
         'course': course
     })
-
 
 # =========================
 # TOGGLE COURSE (ADMIN)

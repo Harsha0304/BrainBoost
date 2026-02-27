@@ -10,7 +10,7 @@
 ========================= -->
 <div class="card mb-4">
     <div class="card-body">
-        <h5>Add Question (Manual)</h5>
+        <h5>Add Question</h5>
 
         <form method="post">
             {% csrf_token %}
@@ -20,21 +20,25 @@
                 <input type="text" name="question" class="form-control" required>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">Option 1</label>
-                <input type="text" name="option1" class="form-control" required>
+            <div id="options-container">
+                <div class="mb-3 option-item">
+                    <label class="form-label">Option</label>
+                    <input type="text" name="options" class="form-control" required>
+                </div>
+
+                <div class="mb-3 option-item">
+                    <label class="form-label">Option</label>
+                    <input type="text" name="options" class="form-control" required>
+                </div>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">Option 2</label>
-                <input type="text" name="option2" class="form-control" required>
-            </div>
+            <button type="button" class="btn btn-outline-primary mb-3" onclick="addOption()">
+                ➕ Add Another Option
+            </button>
 
             <div class="mb-3">
                 <label class="form-label">Correct Option</label>
-                <select name="correct" class="form-select" required>
-                    <option value="1">Option 1</option>
-                    <option value="2">Option 2</option>
+                <select name="correct" id="correct-select" class="form-select" required>
                 </select>
             </div>
 
@@ -52,14 +56,11 @@
     <div class="card-body">
         <h5>📂 Bulk Upload Questions</h5>
 
-        <a href="{% url 'download_quiz_template' quiz.id %}"
-           class="btn btn-outline-primary mb-3">
+        <a href="{% url 'download_quiz_template' quiz.id %}" class="btn btn-outline-primary mb-3">
             ⬇ Download CSV Template
         </a>
 
-        <form method="post"
-              action="{% url 'bulk_upload_questions' quiz.id %}"
-              enctype="multipart/form-data">
+        <form method="post" action="{% url 'bulk_upload_questions' quiz.id %}" enctype="multipart/form-data">
             {% csrf_token %}
 
             <div class="mb-3">
@@ -81,32 +82,65 @@
         <h5>📋 Existing Questions</h5>
 
         {% if quiz.questions.all %}
-            <ol>
+        <ol>
             {% for q in quiz.questions.all %}
-                <li class="mb-2">
-                    {{ q.text }}
-                    <ul>
-                        {% for opt in q.options.all %}
-                        <li>
-                            {{ opt.text }}
-                            {% if opt.is_correct %}
-                                <strong>(✔)</strong>
-                            {% endif %}
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </li>
+            <li class="mb-2">
+                {{ q.text }}
+                <ul>
+                    {% for opt in q.options.all %}
+                    <li>
+                        {{ opt.text }}
+                        {% if opt.is_correct %}
+                        <strong>(✔)</strong>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </li>
             {% endfor %}
-            </ol>
+        </ol>
         {% else %}
-            <p class="text-muted">No questions added yet.</p>
+        <p class="text-muted">No questions added yet.</p>
         {% endif %}
     </div>
 </div>
 
-<a href="{% url 'course_detail' quiz.lesson.course.id %}"
-   class="btn btn-secondary mt-4">
+<a href="{% url 'course_detail' quiz.lesson.course.id %}" class="btn btn-secondary mt-4">
     ⬅ Back to Course
 </a>
+
+<script>
+    function updateCorrectOptions() {
+        const options = document.querySelectorAll('.option-item');
+        const select = document.getElementById('correct-select');
+        select.innerHTML = '';
+
+        options.forEach((opt, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.text = "Option " + (index + 1);
+            select.appendChild(option);
+        });
+    }
+
+    function addOption() {
+        const container = document.getElementById('options-container');
+
+        const div = document.createElement('div');
+        div.classList.add('mb-3', 'option-item');
+
+        div.innerHTML = `
+        <label class="form-label">Option</label>
+        <input type="text" name="options" class="form-control" required>
+    `;
+
+        container.appendChild(div);
+        updateCorrectOptions();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        updateCorrectOptions();
+    });
+</script>
 
 {% endblock %}

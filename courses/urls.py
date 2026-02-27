@@ -12,6 +12,7 @@ from .views import (
     edit_lesson,
     toggle_lesson,
     download_certificate,
+    delete_course,
 )
 
 urlpatterns = [
@@ -20,9 +21,10 @@ urlpatterns = [
 
     path('<int:course_id>/', course_detail, name='course_detail'),
     path('<int:course_id>/enroll/', enroll_course, name='enroll_course'),
+    path('course/<int:course_id>/delete/', delete_course, name='delete_course'),
 
     # COURSE ADMIN
-    path('<int:course_id>/edit/', edit_course, name='edit_course'),
+    path('course/<int:course_id>/edit/', edit_course, name='edit_course'),
     path('<int:course_id>/toggle/', toggle_course, name='toggle_course'),
 
     # LESSON ADMIN

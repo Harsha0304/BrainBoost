@@ -40,26 +40,21 @@ def add_question(request, quiz_id):
 
     if request.method == 'POST':
         question_text = request.POST.get('question')
-        option1 = request.POST.get('option1')
-        option2 = request.POST.get('option2')
-        correct = request.POST.get('correct')
+        options = request.POST.getlist('options')
+        correct_index = request.POST.get('correct')
 
-        if question_text and option1 and option2 and correct:
+        if question_text and options and correct_index is not None:
             question = Question.objects.create(
                 quiz=quiz,
                 text=question_text
             )
 
-            Option.objects.create(
-                question=question,
-                text=option1,
-                is_correct=(correct == '1')
-            )
-            Option.objects.create(
-                question=question,
-                text=option2,
-                is_correct=(correct == '2')
-            )
+            for index, option_text in enumerate(options):
+                Option.objects.create(
+                    question=question,
+                    text=option_text,
+                    is_correct=(str(index) == correct_index)
+                )
 
         return redirect('add_question', quiz_id=quiz.id)
 
@@ -67,7 +62,6 @@ def add_question(request, quiz_id):
         'quiz': quiz,
         'questions': quiz.questions.all()
     })
-
 
 # =========================
 # DOWNLOAD CSV TEMPLATE
