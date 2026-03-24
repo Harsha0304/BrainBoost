@@ -1,163 +1,134 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<style>
-:root {
-    --bg: #f8f9fa;
-    --text: #212529;
-    --card: #ffffff;
-}
-[data-theme="dark"] {
-    --bg: #121212;
-    --text: #f1f1f1;
-    --card: #1e1e1e;
-}
-body {
-    background: var(--bg);
-    color: var(--text);
-}
-
-.card-box {
-    background: var(--card);
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-    transition: transform 0.3s ease;
-}
-.card-box:hover {
-    transform: translateY(-6px);
-}
-
-.theme-toggle {
-    cursor: pointer;
-}
-</style>
-
-<!-- HEADER -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>📊 Dashboard</h2>
-
-    <div class="d-flex align-items-center gap-3">
-        <span id="clock"></span>
-        
-        {% if request.user.is_authenticated and request.user.is_superuser %}
-            <a href="{% url 'pending_user_approvals' %}"
-               class="btn btn-sm btn-outline-warning">
-                🛂 Approvals
-            </a>
+<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+        <h2>👋 Hello, {{ user.first_name|default:user.username }}!</h2>
+        <p>Here's your learning progress at a glance</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        {% if request.user.is_superuser %}
+        <a href="{% url 'pending_user_approvals' %}" class="btn btn-sm btn-warning">
+            <i class="bi bi-person-check me-1"></i>User Approvals
+        </a>
         {% endif %}
-        <button class="btn btn-sm btn-outline-secondary  theme-toggle"
-                onclick="toggleTheme()">
-            🌗 Theme
-        </button>
+        <a href="{% url 'courses' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-book me-1"></i>Browse Courses
+        </a>
     </div>
 </div>
 
-<!-- QUICK ACTION -->
-<div class="mb-4">
-    <a href="{% url 'courses' %}" class="btn btn-primary">
-        📚 View All Courses
-    </a>
-</div>
-
-<!-- STATS -->
-<div class="row g-4">
-    <div class="col-md-3">
-        <div class="card-box">
-            <h6>Courses Enrolled</h6>
-            <h2>{{ enrolled_count }}</h2>
+<!-- STAT CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#EEF1FD;">📚</div>
+            <div class="stat-value">{{ enrolled_count }}</div>
+            <div class="stat-label">Courses Enrolled</div>
         </div>
     </div>
-
-    <div class="col-md-3">
-        <div class="card-box">
-            <h6>Lessons Completed</h6>
-            <h2>{{ completed_lessons }} / {{ total_lessons }}</h2>
+    <div class="col-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#F0FDF4;">✅</div>
+            <div class="stat-value">{{ completed_lessons }}<span style="font-size:1rem;font-weight:500;color:var(--muted);">/{{ total_lessons }}</span></div>
+            <div class="stat-label">Lessons Completed</div>
         </div>
     </div>
-
-    <div class="col-md-3">
-        <div class="card-box">
-            <h6>Overall Progress</h6>
-            <h2>{{ progress }}%</h2>
+    <div class="col-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#FFF7ED;">⏱️</div>
+            <div class="stat-value">{{ time_spent_minutes }}<span style="font-size:.9rem;font-weight:500;color:var(--muted);"> min</span></div>
+            <div class="stat-label">Today's Study Time</div>
         </div>
     </div>
-
-    <div class="col-md-3">
-        <div class="card-box">
-            <h6>Today Time Spent</h6>
-            <h2>{{ time_spent_minutes }} min</h2>
+    <div class="col-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#FFF1F2;">🔥</div>
+            <div class="stat-value">{{ current_streak }}<span style="font-size:.9rem;font-weight:500;color:var(--muted);"> day{{ current_streak|pluralize }}</span></div>
+            <div class="stat-label">Current Streak</div>
         </div>
     </div>
 </div>
 
-<!-- 🔥 STREAK SECTION -->
-<div class="row g-4 mt-1">
-    <div class="col-md-6">
-        <div class="card-box text-center">
-            <h6>🔥 Current Learning Streak</h6>
-            <h2>{{ current_streak }} day{{ current_streak|pluralize }}</h2>
-            <small class="text-muted">Keep learning daily!</small>
+<!-- PROGRESS + STREAK -->
+<div class="row g-3 mb-4">
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-bar-chart-fill me-2" style="color:var(--brand);"></i>Overall Progress</span>
+                <span class="badge" style="background:var(--brand-light);color:var(--brand);">{{ progress }}%</span>
+            </div>
+            <div class="card-body d-flex flex-column justify-content-center">
+                <div class="d-flex justify-content-between mb-1" style="font-size:.8rem;color:var(--muted);">
+                    <span>{{ completed_lessons }} completed</span>
+                    <span>{{ total_lessons }} total</span>
+                </div>
+                <div class="progress" style="height:12px;">
+                    <div class="progress-bar" role="progressbar" style="width:{{ progress }}%;"></div>
+                </div>
+                {% if progress == 100 %}
+                <div class="alert alert-success py-2 mt-3 mb-0 text-center" style="font-size:.83rem;">
+                    🎉 Congratulations! You've completed all enrolled courses.
+                </div>
+                {% endif %}
+            </div>
         </div>
     </div>
-
-    <div class="col-md-6">
-        <div class="card-box text-center">
-            <h6>🏆 Longest Streak</h6>
-            <h2>{{ longest_streak }} day{{ longest_streak|pluralize }}</h2>
-            <small class="text-muted">Your best consistency</small>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-trophy-fill me-2" style="color:#F59E0B;"></i>Streak</div>
+            <div class="card-body text-center">
+                <div style="font-size:2.5rem;margin-bottom:4px;">🔥</div>
+                <div style="font-family:var(--font-head);font-size:2rem;font-weight:800;color:var(--text);">{{ current_streak }}</div>
+                <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px;">day{{ current_streak|pluralize }} current</div>
+                <div style="font-size:.8rem;color:var(--muted);">Best: <strong style="color:var(--text);">{{ longest_streak }} day{{ longest_streak|pluralize }}</strong></div>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- ENROLLED COURSES -->
-<h4 class="mt-5">📚 Enrolled Courses</h4>
-<ul class="list-group">
-{% for course in enrolled_courses %}
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-        <span>{{ course.title }}</span>
-        <a href="{% url 'course_detail' course.id %}"
-           class="btn btn-sm btn-outline-primary">
-            Open
-        </a>
-    </li>
-{% empty %}
-    <li class="list-group-item">
-        Not enrolled in any course yet.
-        <a href="{% url 'courses' %}">Browse Courses</a>
-    </li>
-{% endfor %}
-</ul>
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-journal-bookmark-fill me-2" style="color:var(--brand);"></i>Enrolled Courses</span>
+        <a href="{% url 'courses' %}" class="btn btn-sm btn-outline-primary">Browse All</a>
+    </div>
+    <div class="card-body" style="padding:12px 16px;">
+        {% for course in enrolled_courses %}
+        <div class="d-flex align-items-center justify-content-between py-2" style="border-bottom:1px solid var(--border);">
+            <div class="d-flex align-items-center gap-2">
+                <div style="width:32px;height:32px;background:var(--brand-light);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;">📘</div>
+                <span style="font-weight:600;font-size:.88rem;">{{ course.title }}</span>
+            </div>
+            <a href="{% url 'course_detail' course.id %}" class="btn btn-sm btn-outline-primary" style="font-size:.78rem;">Open</a>
+        </div>
+        {% empty %}
+        <div class="text-center py-4" style="color:var(--muted);">
+            <div style="font-size:2rem;margin-bottom:8px;">📚</div>
+            <p class="mb-2" style="font-size:.875rem;">You haven't enrolled in any courses yet.</p>
+            <a href="{% url 'courses' %}" class="btn btn-primary btn-sm">Browse Courses</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
 
-<!-- LAST 7 DAYS GRAPH -->
-<h4 class="mt-5">⏱ Time Spent (Last 7 Days)</h4>
-<div class="card-box mt-3">
-    <canvas id="timeSpentChart" height="140"></canvas>
+<!-- TIME SPENT CHART -->
+<div class="card">
+    <div class="card-header"><i class="bi bi-clock-history me-2" style="color:var(--brand);"></i>Time Spent — Last 7 Days</div>
+    <div class="card-body">
+        <canvas id="timeSpentChart" height="110"></canvas>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block extra_js %}
 <script>
-/* LIVE CLOCK */
-setInterval(() => {
-    document.getElementById("clock").innerText =
-        new Date().toLocaleString();
-}, 1000);
+const root = getComputedStyle(document.documentElement);
+const brand = '#4361EE';
+const isDark = document.body.getAttribute('data-theme') === 'dark';
 
-/* THEME TOGGLE */
-function toggleTheme() {
-    const theme =
-        document.body.getAttribute("data-theme") === "dark"
-            ? "light"
-            : "dark";
-    document.body.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-}
-document.body.setAttribute(
-    "data-theme",
-    localStorage.getItem("theme") || "light"
-);
-
-/* LAST 7 DAYS TIME SPENT GRAPH */
 new Chart(document.getElementById('timeSpentChart'), {
     type: 'bar',
     data: {
@@ -165,39 +136,32 @@ new Chart(document.getElementById('timeSpentChart'), {
         datasets: [{
             label: 'Minutes Spent',
             data: {{ daily_values|safe }},
-            backgroundColor: '#0d6efd',
-            borderRadius: 8,
-            minBarLength: 10
+            backgroundColor: 'rgba(67,97,238,.75)',
+            borderRadius: 6,
+            borderSkipped: false,
+            minBarLength: 4,
         }]
     },
     options: {
         responsive: true,
         plugins: {
+            legend: { display: false },
             tooltip: {
-                callbacks: {
-                    label: function(ctx) {
-                        return ctx.parsed.y + ' minutes';
-                    }
-                }
+                callbacks: { label: ctx => ctx.parsed.y + ' min' }
             }
         },
         scales: {
             y: {
                 beginAtZero: true,
-                title: {
-                    display: true,
-                    text: 'Minutes'
-                }
+                grid: { color: 'rgba(100,116,139,.12)' },
+                ticks: { color: '#64748B', font: { size: 11 } }
             },
             x: {
-                title: {
-                    display: true,
-                    text: 'Last 7 Days'
-                }
+                grid: { display: false },
+                ticks: { color: '#64748B', font: { size: 11 } }
             }
         }
     }
 });
 </script>
-
 {% endblock %}

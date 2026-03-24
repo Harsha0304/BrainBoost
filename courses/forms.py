@@ -35,6 +35,17 @@ class LessonForm(forms.ModelForm):
             'is_active',
         ]
         widgets = {
-            'pdf_file': PlainFileInput(),
-            'video_file': PlainFileInput(),
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter lesson title'
+            }),
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Optional notes or description'
+            }),
+            'content_type': forms.Select(attrs={'class': 'form-select'}),
+            'pdf_file': PlainFileInput(attrs={'class': 'form-control'}),
+            'video_file': PlainFileInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

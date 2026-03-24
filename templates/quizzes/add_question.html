@@ -1,146 +1,133 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<h2>🧠 {{ quiz.title }}</h2>
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.82rem;">
+        <li class="breadcrumb-item"><a href="{% url 'courses' %}">Courses</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'course_detail' quiz.lesson.course.id %}">{{ quiz.lesson.course.title }}</a></li>
+        <li class="breadcrumb-item active">Manage Quiz</li>
+    </ol>
+</nav>
 
-<hr>
-
-<!-- =========================
-     ADD QUESTION (MANUAL)
-========================= -->
-<div class="card mb-4">
-    <div class="card-body">
-        <h5>Add Question</h5>
-
-        <form method="post">
-            {% csrf_token %}
-
-            <div class="mb-3">
-                <label class="form-label">Question</label>
-                <input type="text" name="question" class="form-control" required>
-            </div>
-
-            <div id="options-container">
-                <div class="mb-3 option-item">
-                    <label class="form-label">Option</label>
-                    <input type="text" name="options" class="form-control" required>
-                </div>
-
-                <div class="mb-3 option-item">
-                    <label class="form-label">Option</label>
-                    <input type="text" name="options" class="form-control" required>
-                </div>
-            </div>
-
-            <button type="button" class="btn btn-outline-primary mb-3" onclick="addOption()">
-                ➕ Add Another Option
-            </button>
-
-            <div class="mb-3">
-                <label class="form-label">Correct Option</label>
-                <select name="correct" id="correct-select" class="form-select" required>
-                </select>
-            </div>
-
-            <button class="btn btn-success">
-                ➕ Add Question
-            </button>
-        </form>
-    </div>
+<div class="page-header">
+    <h2>🧠 {{ quiz.title }}</h2>
+    <p>Add and manage questions for this quiz · Pass mark: {{ quiz.pass_percentage }}%</p>
 </div>
 
-<!-- =========================
-     BULK UPLOAD
-========================= -->
-<div class="card mb-4">
-    <div class="card-body">
-        <h5>📂 Bulk Upload Questions</h5>
+<div class="row g-4">
+<div class="col-lg-7">
 
-        <a href="{% url 'download_quiz_template' quiz.id %}" class="btn btn-outline-primary mb-3">
-            ⬇ Download CSV Template
-        </a>
-
-        <form method="post" action="{% url 'bulk_upload_questions' quiz.id %}" enctype="multipart/form-data">
-            {% csrf_token %}
-
-            <div class="mb-3">
-                <input type="file" name="file" accept=".csv" required>
-            </div>
-
-            <button class="btn btn-outline-success">
-                ⬆ Upload CSV
-            </button>
-        </form>
+    <!-- ADD QUESTION -->
+    <div class="card mb-4">
+        <div class="card-header"><i class="bi bi-plus-circle-fill me-2" style="color:var(--success);"></i>Add Question</div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Question Text</label>
+                    <input type="text" name="question" class="form-control" placeholder="Enter your question…" required>
+                </div>
+                <div id="options-container">
+                    <div class="mb-2 option-item">
+                        <label class="form-label">Option 1</label>
+                        <input type="text" name="options" class="form-control" placeholder="Option A" required>
+                    </div>
+                    <div class="mb-2 option-item">
+                        <label class="form-label">Option 2</label>
+                        <input type="text" name="options" class="form-control" placeholder="Option B" required>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary mb-3" onclick="addOption()">
+                    <i class="bi bi-plus me-1"></i>Add Option
+                </button>
+                <div class="mb-3">
+                    <label class="form-label">Correct Option</label>
+                    <select name="correct" id="correct-select" class="form-select" required></select>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-lg me-1"></i>Add Question
+                </button>
+            </form>
+        </div>
     </div>
+
+    <!-- BULK UPLOAD -->
+    <div class="card">
+        <div class="card-header"><i class="bi bi-upload me-2" style="color:var(--brand);"></i>Bulk Upload via CSV</div>
+        <div class="card-body">
+            <a href="{% url 'download_quiz_template' quiz.id %}" class="btn btn-sm btn-outline-secondary mb-3">
+                <i class="bi bi-download me-1"></i>Download CSV Template
+            </a>
+            <form method="post" action="{% url 'bulk_upload_questions' quiz.id %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <input type="file" name="file" accept=".csv" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="bi bi-cloud-upload me-1"></i>Upload CSV
+                </button>
+            </form>
+        </div>
+    </div>
+
 </div>
 
-<!-- =========================
-     EXISTING QUESTIONS
-========================= -->
-<div class="card">
-    <div class="card-body">
-        <h5>📋 Existing Questions</h5>
-
-        {% if quiz.questions.all %}
-        <ol>
+<div class="col-lg-5">
+    <!-- EXISTING QUESTIONS -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-list-check me-2" style="color:var(--brand);"></i>Questions</span>
+            <span class="badge" style="background:var(--brand-light);color:var(--brand);">{{ quiz.questions.count }}</span>
+        </div>
+        <div class="card-body" style="padding:12px 16px;">
+            {% if quiz.questions.all %}
             {% for q in quiz.questions.all %}
-            <li class="mb-2">
-                {{ q.text }}
-                <ul>
-                    {% for opt in q.options.all %}
-                    <li>
-                        {{ opt.text }}
-                        {% if opt.is_correct %}
-                        <strong>(✔)</strong>
-                        {% endif %}
-                    </li>
-                    {% endfor %}
-                </ul>
-            </li>
+            <div class="mb-3 pb-3" style="border-bottom:1px solid var(--border);">
+                <div style="font-weight:600;font-size:.85rem;margin-bottom:6px;">{{ forloop.counter }}. {{ q.text }}</div>
+                {% for opt in q.options.all %}
+                <div style="font-size:.8rem;padding:3px 8px;border-radius:5px;margin-bottom:2px;{% if opt.is_correct %}background:#F0FDF4;color:#16A34A;font-weight:600;{% else %}color:var(--muted);{% endif %}">
+                    {% if opt.is_correct %}<i class="bi bi-check-circle-fill me-1"></i>{% else %}○ {% endif %}{{ opt.text }}
+                </div>
+                {% endfor %}
+            </div>
             {% endfor %}
-        </ol>
-        {% else %}
-        <p class="text-muted">No questions added yet.</p>
-        {% endif %}
+            {% else %}
+            <div class="text-center py-4" style="color:var(--muted);font-size:.85rem;">
+                <div style="font-size:2rem;margin-bottom:8px;">❓</div>
+                No questions added yet.
+            </div>
+            {% endif %}
+        </div>
     </div>
 </div>
+</div>
 
-<a href="{% url 'course_detail' quiz.lesson.course.id %}" class="btn btn-secondary mt-4">
-    ⬅ Back to Course
-</a>
+<div class="mt-3">
+    <a href="{% url 'course_detail' quiz.lesson.course.id %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Back to Course
+    </a>
+</div>
 
 <script>
-    function updateCorrectOptions() {
-        const options = document.querySelectorAll('.option-item');
-        const select = document.getElementById('correct-select');
-        select.innerHTML = '';
-
-        options.forEach((opt, index) => {
-            const option = document.createElement('option');
-            option.value = index;
-            option.text = "Option " + (index + 1);
-            select.appendChild(option);
-        });
-    }
-
-    function addOption() {
-        const container = document.getElementById('options-container');
-
-        const div = document.createElement('div');
-        div.classList.add('mb-3', 'option-item');
-
-        div.innerHTML = `
-        <label class="form-label">Option</label>
-        <input type="text" name="options" class="form-control" required>
-    `;
-
-        container.appendChild(div);
-        updateCorrectOptions();
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        updateCorrectOptions();
+function updateCorrectOptions() {
+    const items = document.querySelectorAll('.option-item');
+    const sel = document.getElementById('correct-select');
+    sel.innerHTML = '';
+    items.forEach((_, i) => {
+        const o = document.createElement('option');
+        o.value = i; o.text = 'Option ' + (i + 1);
+        sel.appendChild(o);
     });
+}
+function addOption() {
+    const c = document.getElementById('options-container');
+    const count = c.querySelectorAll('.option-item').length + 1;
+    const d = document.createElement('div');
+    d.classList.add('mb-2', 'option-item');
+    d.innerHTML = '<label class="form-label">Option ' + count + '</label><input type="text" name="options" class="form-control" placeholder="Option ' + String.fromCharCode(64 + count) + '" required>';
+    c.appendChild(d);
+    updateCorrectOptions();
+}
+document.addEventListener('DOMContentLoaded', updateCorrectOptions);
 </script>
-
 {% endblock %}

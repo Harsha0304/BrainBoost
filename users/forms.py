@@ -11,7 +11,6 @@ class RegisterForm(UserCreationForm):
         }),
         required=True
     )
-
     username = forms.CharField(
         label="Username",
         widget=forms.TextInput(attrs={
@@ -20,23 +19,19 @@ class RegisterForm(UserCreationForm):
         }),
         required=True
     )
-
     password1 = forms.CharField(
         label="Password",
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
             'placeholder': 'Enter password',
-            'id': 'password1'
         }),
         required=True
     )
-
     password2 = forms.CharField(
-        label="Retype Password",
+        label="Confirm Password",
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
             'placeholder': 'Retype password',
-            'id': 'password2'
         }),
         required=True
     )
@@ -48,6 +43,5 @@ class RegisterForm(UserCreationForm):
     def clean_email(self):
         email = self.cleaned_data["email"]
         if User.objects.filter(email=email).exists():
-            raise forms.ValidationError('This email already exists.')
+            raise forms.ValidationError('This email is already registered.')
         return email
-

@@ -1,146 +1,122 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<style>
-    .lesson-wrapper {
-        max-width: 640px;
-        margin: 60px auto;
-    }
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.82rem;">
+        <li class="breadcrumb-item"><a href="{% url 'courses' %}">Courses</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'course_detail' lesson.course.id %}">{{ lesson.course.title }}</a></li>
+        <li class="breadcrumb-item active">Edit Lesson</li>
+    </ol>
+</nav>
 
-    .lesson-card {
-        background: var(--card, #fff);
-        border-radius: 16px;
-        padding: 28px;
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-    }
-
-    .lesson-card h2 {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    .lesson-card input,
-    .lesson-card textarea,
-    .lesson-card select {
-        border-radius: 8px;
-        padding: 10px;
-    }
-
-    .drop-zone {
-        border: 2px dashed #bbb;
-        border-radius: 12px;
-        padding: 30px;
-        text-align: center;
-        cursor: pointer;
-    }
-
-    .drop-zone.dragover {
-        border-color: #198754;
-        background: #e9f7ef;
-    }
-
-    .drop-zone input {
-        display: none;
-    }
-
-    .lesson-actions {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 25px;
-    }
-</style>
-
-<div class="lesson-wrapper">
-    <div class="lesson-card">
-        <h2>✏ Edit Lesson — {{ lesson.title }}</h2>
-
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-
-            <div class="mb-3">
-                <label class="form-label">Lesson Title</label>
-                {{ form.title }}
+<div class="row justify-content-center">
+<div class="col-lg-8">
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-pencil-fill me-2" style="color:var(--brand);"></i>Edit Lesson — {{ lesson.title }}
+        </div>
+        <div class="card-body">
+            {% if form.errors %}
+            <div class="alert alert-danger py-2 mb-3" style="font-size:.83rem;">
+                {% for field in form %}{% for error in field.errors %}<div>{{ field.label }}: {{ error }}</div>{% endfor %}{% endfor %}
             </div>
-
-            <div class="mb-3">
-                <label class="form-label">Description</label>
-                {{ form.content }}
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Content Type</label>
-                {{ form.content_type }}
-            </div>
-
-            <!-- PDF -->
-            <div class="mb-3" id="pdf-wrapper">
-                <label class="form-label">PDF File</label>
-
-                {% if lesson.pdf_file %}
-                <p class="mb-2">
-                    📄 Current file:
-                    <a href="{{ lesson.pdf_file.url }}" target="_blank">
-                        {{ lesson.pdf_file.name|slice:"13:" }}
-                    </a>
-                </p>
-                {% endif %}
-
-                <div class="drop-zone">
-                    <span>Drag & drop new PDF here or click to upload</span>
-                    {{ form.pdf_file }}
+            {% endif %}
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-8">
+                        <label class="form-label">Lesson Title</label>
+                        {{ form.title }}
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label">Content Type</label>
+                        {{ form.content_type }}
+                    </div>
                 </div>
-            </div>
 
-            <!-- Video -->
-            <div class="mb-3" id="video-wrapper">
-                <label class="form-label">Video File</label>
-
-                {% if lesson.video_file %}
-                <p class="mb-2">
-                    🎥 Current file:
-                    <a href="{{ lesson.video_file.url }}" target="_blank">
-                        {{ lesson.video_file.name|slice:"15:" }}
-                    </a>
-                </p>
-                {% endif %}
-
-                <div class="drop-zone">
-                    <span>Drag & drop new PDF here or click to upload</span>
-                    {{ form.pdf_file }}
+                <div class="mb-3">
+                    <label class="form-label">Notes / Description</label>
+                    {{ form.content }}
                 </div>
-            </div>
 
-            <div class="form-check mb-3">
-                {{ form.is_active }}
-                <label class="form-check-label">Active</label>
-            </div>
+                <!-- PDF Upload -->
+                <div class="mb-3" id="pdf-wrapper">
+                    <label class="form-label"><i class="bi bi-file-earmark-pdf text-danger me-1"></i>PDF File</label>
+                    {% if lesson.pdf_file %}
+                    <div class="mb-2 p-2 rounded" style="background:var(--bg);border:1px solid var(--border);font-size:.82rem;">
+                        📄 Current: <a href="{{ lesson.pdf_file.url }}" target="_blank">{{ lesson.pdf_file.name|slice:"13:" }}</a>
+                    </div>
+                    {% endif %}
+                    <div class="drop-zone" id="pdf-zone">
+                        <div class="drop-icon">📄</div>
+                        <div class="drop-text" id="pdf-drop-text">Drag & drop new PDF or <strong>click to upload</strong></div>
+                        {{ form.pdf_file }}
+                    </div>
+                </div>
 
-            <div class="lesson-actions">
-                <button class="btn btn-primary">
-                    Save Changes
-                </button>
-                <a href="{% url 'course_detail' lesson.course.id %}" class="btn btn-outline-secondary">
-                    Cancel
-                </a>
-            </div>
-        </form>
+                <!-- Video Upload -->
+                <!-- BUG FIX: was rendering form.pdf_file here instead of form.video_file -->
+                <div class="mb-3" id="video-wrapper">
+                    <label class="form-label"><i class="bi bi-play-circle text-primary me-1"></i>Video File</label>
+                    {% if lesson.video_file %}
+                    <div class="mb-2 p-2 rounded" style="background:var(--bg);border:1px solid var(--border);font-size:.82rem;">
+                        🎬 Current: <a href="{{ lesson.video_file.url }}" target="_blank">{{ lesson.video_file.name|slice:"15:" }}</a>
+                    </div>
+                    {% endif %}
+                    <div class="drop-zone" id="video-zone">
+                        <div class="drop-icon">🎬</div>
+                        <div class="drop-text" id="video-drop-text">Drag & drop new video or <strong>click to upload</strong></div>
+                        {{ form.video_file }}
+                    </div>
+                </div>
+
+                <div class="form-check mb-4">
+                    {{ form.is_active }}
+                    <label class="form-check-label ms-1" for="{{ form.is_active.id_for_label }}">Lesson is Active</label>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-floppy me-1"></i>Save Changes
+                    </button>
+                    <a href="{% url 'course_detail' lesson.course.id %}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
     </div>
+</div>
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const type = document.getElementById("id_content_type");
-        const pdf = document.getElementById("pdf-wrapper");
-        const video = document.getElementById("video-wrapper");
+document.addEventListener("DOMContentLoaded", function () {
+    const type  = document.getElementById("id_content_type");
+    const pdf   = document.getElementById("pdf-wrapper");
+    const video = document.getElementById("video-wrapper");
 
-        function toggle() {
-            pdf.style.display = type.value === "PDF" ? "block" : "none";
-            video.style.display = type.value === "VIDEO" ? "block" : "none";
-        }
+    function toggle() {
+        pdf.style.display   = type.value === "PDF"   ? "block" : "none";
+        video.style.display = type.value === "VIDEO" ? "block" : "none";
+    }
+    type.addEventListener("change", toggle);
+    toggle();
 
-        type.addEventListener("change", toggle);
-        toggle();
-    });
+    function setupZone(zoneId, inputId, textId) {
+        const zone  = document.getElementById(zoneId);
+        const input = document.getElementById(inputId);
+        const text  = document.getElementById(textId);
+        if (!zone || !input) return;
+        zone.addEventListener("click", () => input.click());
+        zone.addEventListener("dragover",  e => { e.preventDefault(); zone.classList.add("dragover"); });
+        zone.addEventListener("dragleave", () => zone.classList.remove("dragover"));
+        zone.addEventListener("drop", e => {
+            e.preventDefault(); zone.classList.remove("dragover");
+            const f = e.dataTransfer.files[0];
+            if (f) { input.files = e.dataTransfer.files; text.textContent = "📎 " + f.name; }
+        });
+        input.addEventListener("change", () => { if (input.files.length) text.textContent = "📎 " + input.files[0].name; });
+    }
+    setupZone("pdf-zone",   "id_pdf_file",   "pdf-drop-text");
+    setupZone("video-zone", "id_video_file", "video-drop-text");
+});
 </script>
-
 {% endblock %}

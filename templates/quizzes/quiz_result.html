@@ -1,43 +1,63 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class="card shadow-sm">
-    <div class="card-body text-center">
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.82rem;">
+        <li class="breadcrumb-item"><a href="{% url 'courses' %}">Courses</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'course_detail' quiz.lesson.course.id %}">{{ quiz.lesson.course.title }}</a></li>
+        <li class="breadcrumb-item active">Quiz Result</li>
+    </ol>
+</nav>
 
-        <h2 class="mb-3">🎉 Quiz Completed</h2>
+<div class="row justify-content-center">
+<div class="col-lg-6">
+<div class="card text-center">
+    <div class="card-header">{{ quiz.title }}</div>
+    <div class="card-body py-4">
 
-        <h4 class="mb-2">
-            {{ quiz.title }}
-        </h4>
+        <div class="result-ring {% if result.passed %}pass{% else %}fail{% endif %}">
+            <div class="result-pct">{{ result.percentage|floatformat:0 }}%</div>
+            <div class="result-pct-label">Score</div>
+        </div>
 
-        <hr>
-
-        <p class="fs-5">
-            ✅ Score:
-            <strong>{{ result.score }} / {{ result.total_questions }}</strong>
-        </p>
-
-        <p class="fs-5">
-            📊 Percentage:
-            <strong>{{ result.percentage }}%</strong>
-        </p>
-
-        {% if result.percentage >= 50 %}
-            <div class="alert alert-success mt-3">
-                🎉 Congratulations! You passed the quiz.
+        <div class="d-flex justify-content-center gap-4 mb-4">
+            <div>
+                <div style="font-family:var(--font-head);font-size:1.5rem;font-weight:800;">{{ result.score }}</div>
+                <div style="font-size:.75rem;color:var(--muted);">Correct</div>
             </div>
+            <div style="border-right:1px solid var(--border);"></div>
+            <div>
+                <div style="font-family:var(--font-head);font-size:1.5rem;font-weight:800;">{{ result.total_questions }}</div>
+                <div style="font-size:.75rem;color:var(--muted);">Total</div>
+            </div>
+            <div style="border-right:1px solid var(--border);"></div>
+            <div>
+                <div style="font-family:var(--font-head);font-size:1.5rem;font-weight:800;">{{ quiz.pass_percentage }}%</div>
+                <div style="font-size:.75rem;color:var(--muted);">Pass Mark</div>
+            </div>
+        </div>
+
+        {% if result.passed %}
+        <div class="alert alert-success py-2 mb-4" style="font-size:.88rem;">
+            🎉 <strong>Congratulations!</strong> You passed this quiz.
+        </div>
         {% else %}
-            <div class="alert alert-warning mt-3">
-                ⚠️ You did not pass. Better luck next time!
-            </div>
+        <div class="alert alert-warning py-2 mb-4" style="font-size:.88rem;">
+            ⚠️ You didn't pass this time. Review the lesson and try again.
+        </div>
         {% endif %}
 
-        <a href="{% url 'lesson_detail' quiz.lesson.id %}"
-           class="btn btn-primary mt-3">
-            ⬅ Back to Lesson
-        </a>
-
+        <div class="d-flex justify-content-center gap-2 flex-wrap">
+            <a href="{% url 'take_quiz' quiz.id %}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-repeat me-1"></i>Retake Quiz
+            </a>
+            <a href="{% url 'lesson_detail' quiz.lesson.id %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Back to Lesson
+            </a>
+        </div>
     </div>
+</div>
+</div>
 </div>
 
 {% endblock %}

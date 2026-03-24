@@ -1,121 +1,38 @@
 {% extends 'base.html' %}
-{% block content %}
+{% block auth_content %}
+<div class="auth-card">
+    <div class="auth-logo">
+        <div class="logo-icon">🧠</div>
+        <div class="logo-name">BrainBoost</div>
+    </div>
+    <h2 class="auth-title">Welcome back</h2>
+    <p class="auth-sub">Sign in to continue your learning journey</p>
 
-<style>
-/* ===== Page Layout ===== */
-.login-wrapper {
-    height: 80vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+    {% if form.errors %}
+    <div class="alert alert-danger text-center py-2 mb-3" style="font-size:.83rem;">
+        <i class="bi bi-exclamation-circle me-1"></i> Invalid username or password
+    </div>
+    {% endif %}
 
-/* ===== Card ===== */
-.login-card {
-    width: 360px;
-    padding: 30px;
-    background: #ffffff;
-    border-radius: 14px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-    animation: fadeSlide 0.8s ease;
-}
-
-/* ===== Animation ===== */
-@keyframes fadeSlide {
-    from {
-        opacity: 0;
-        transform: translateY(50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* ===== Title ===== */
-.login-card h2 {
-    text-align: center;
-    margin-bottom: 25px;
-}
-
-/* ===== Inputs ===== */
-.login-card input {
-    width: 100%;
-    padding: 10px;
-    margin-top: 5px;
-    margin-bottom: 15px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-}
-
-/* ===== Button ===== */
-.login-card button {
-    width: 100%;
-    padding: 10px;
-    background: #0d6efd;
-    border: none;
-    color: white;
-    border-radius: 6px;
-    font-size: 16px;
-    transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.login-card button:hover {
-    background: #084298;
-    transform: scale(1.05);
-}
-
-/* ===== Error ===== */
-.error-msg {
-    color: red;
-    text-align: center;
-    margin-bottom: 10px;
-}
-
-/* ===== Footer ===== */
-.login-footer {
-    text-align: center;
-    margin-top: 15px;
-}
-</style>
-
-<div class="login-wrapper">
-    <div class="login-card" id="loginCard">
-        <h2>🧠 BrainBoost Login</h2>
-
-        {% if form.errors %}
-            <div class="error-msg">Invalid username or password</div>
-        {% endif %}
-
-        <form method="post">
-            {% csrf_token %}
-
-            <label>Username</label>
-            {{ form.username }}
-
-            <label>Password</label>
-            {{ form.password }}
-
-            <button type="submit">Login</button>
-        </form>
-
-        <div class="login-footer">
-            <a href="{% url 'password_reset' %}">Forgot password?</a><br>
-            New user? <a href="/register/">Register</a>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label">Username or Email</label>
+            <input type="text" name="username" class="form-control" placeholder="Enter username or email" autofocus required>
         </div>
+        <div class="mb-4">
+            <label class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+        </div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit" class="btn btn-primary w-100 py-2">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+        </button>
+    </form>
+
+    <div class="mt-3 d-flex justify-content-between" style="font-size:.83rem;">
+        <a href="{% url 'password_reset' %}" class="text-muted">Forgot password?</a>
+        <a href="/register/">Create account</a>
     </div>
 </div>
-
-<script>
-/* ===== Simple JS Animation Effect ===== */
-document.addEventListener("DOMContentLoaded", () => {
-    const card = document.getElementById("loginCard");
-    card.style.opacity = "0";
-
-    setTimeout(() => {
-        card.style.opacity = "1";
-    }, 100);
-});
-</script>
-
 {% endblock %}

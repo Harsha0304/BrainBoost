@@ -1,61 +1,105 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<h2>{{ lesson.title }}</h2>
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.82rem;">
+        <li class="breadcrumb-item"><a href="{% url 'courses' %}">Courses</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'course_detail' lesson.course.id %}">{{ lesson.course.title }}</a></li>
+        <li class="breadcrumb-item active">{{ lesson.title }}</li>
+    </ol>
+</nav>
 
-<div class="card mt-3">
-    <div class="card-body">
+<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-3">
+    <div>
+        <h2>{{ lesson.title }}</h2>
+        <p>
+            {% if lesson.content_type == 'PDF' %}
+            <i class="bi bi-file-earmark-pdf text-danger me-1"></i>PDF Lesson
+            {% else %}
+            <i class="bi bi-play-circle text-primary me-1"></i>Video Lesson
+            {% endif %}
+        </p>
+    </div>
+    {% if progress.completed %}
+    <span class="badge" style="background:#F0FDF4;color:#16A34A;padding:8px 14px;font-size:.82rem;border-radius:8px;">
+        <i class="bi bi-check-circle-fill me-1"></i>Completed
+    </span>
+    {% endif %}
+</div>
 
+<!-- CONTENT -->
+<div class="card mb-4">
+    <div class="card-body" style="padding:0;overflow:hidden;border-radius:var(--radius);">
         {% if lesson.content_type == 'PDF' %}
             {% if lesson.pdf_file %}
-                <iframe src="{{ lesson.pdf_file.url }}"
-                        width="100%" height="500"
-                        style="border:none;"></iframe>
+            <iframe src="{{ lesson.pdf_file.url }}" class="lesson-embed"></iframe>
+            {% else %}
+            <div class="text-center py-5 text-muted">No PDF file attached.</div>
             {% endif %}
         {% elif lesson.content_type == 'VIDEO' %}
             {% if lesson.video_file %}
-                <video width="100%" controls>
-                    <source src="{{ lesson.video_file.url }}">
-                </video>
+            <video width="100%" controls style="display:block;max-height:560px;background:#000;">
+                <source src="{{ lesson.video_file.url }}">
+                Your browser doesn't support video playback.
+            </video>
+            {% else %}
+            <div class="text-center py-5 text-muted">No video file attached.</div>
             {% endif %}
         {% endif %}
-
     </div>
 </div>
 
-<hr>
-
-<!-- =========================
-     LESSON COMPLETION
-========================= -->
-{% if not progress.completed %}
-<form method="post" action="{% url 'complete_lesson' lesson.id %}">
-    {% csrf_token %}
-    <button class="btn btn-success">
-        ✅ Mark Lesson as Completed
-    </button>
-</form>
-{% else %}
-<div class="alert alert-success mt-3">
-    🎉 Lesson completed
+{% if lesson.content %}
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-card-text me-2" style="color:var(--brand);"></i>Notes</div>
+    <div class="card-body" style="font-size:.9rem;line-height:1.7;white-space:pre-wrap;">{{ lesson.content }}</div>
 </div>
 {% endif %}
 
-<!-- =========================
-     QUIZ SECTION
-========================= -->
-{% if lesson.quiz %}
-    <div class="mt-4">
-        <a href="{% url 'take_quiz' lesson.quiz.id %}"
-           class="btn btn-primary">
-            📝 Take Quiz
-        </a>
-    </div>
-{% endif %}
+<!-- ACTIONS -->
+<div class="card mb-4">
+    <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3">
 
-<a href="{% url 'course_detail' lesson.course.id %}"
-   class="btn btn-secondary mt-4">
-    ⬅ Back to Course
-</a>
+        <div>
+            {% if not progress.completed %}
+            <form method="post" action="{% url 'complete_lesson' lesson.id %}">
+                {% csrf_token %}
+                <button class="btn btn-success">
+                    <i class="bi bi-check-circle me-2"></i>Mark as Completed
+                </button>
+            </form>
+            {% else %}
+            <div class="text-success fw-semibold" style="font-size:.9rem;">
+                <i class="bi bi-check-circle-fill me-2"></i>Lesson completed
+                {% if progress.completed_at %}
+                <span class="text-muted fw-normal"> · {{ progress.completed_at|date:"M d, Y" }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            {% if lesson.quiz %}
+                {% if quiz_result %}
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge" style="background:var(--brand-light);color:var(--brand);padding:8px 12px;font-size:.82rem;border-radius:8px;">
+                        <i class="bi bi-bar-chart-fill me-1"></i>Quiz: {{ quiz_result.score }}/{{ quiz_result.total_questions }} ({{ quiz_result.percentage|floatformat:0 }}%)
+                        {% if quiz_result.passed %} ✅{% else %} ⚠️{% endif %}
+                    </span>
+                    <a href="{% url 'take_quiz' lesson.quiz.id %}" class="btn btn-sm btn-outline-primary">Retake Quiz</a>
+                </div>
+                {% else %}
+                <a href="{% url 'take_quiz' lesson.quiz.id %}" class="btn btn-primary">
+                    <i class="bi bi-pencil-square me-2"></i>Take Quiz
+                </a>
+                {% endif %}
+            {% endif %}
+
+            <a href="{% url 'course_detail' lesson.course.id %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Back to Course
+            </a>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

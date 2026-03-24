@@ -122,6 +122,7 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = '2k26brainboostofficial@gmail.com'
 EMAIL_HOST_PASSWORD = 'zywwfeoageisolsi'
 EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -129,3 +130,6 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
+# Static files directories
+STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'

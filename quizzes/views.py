@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.utils.timezone import now
 
 from courses.models import Lesson
+from gamification.models import UserPoints, Badge, UserBadge
 from .models import Quiz, Question, Option, QuizResult
 
 
@@ -109,9 +110,7 @@ def bulk_upload_questions(request, quiz_id):
 
         return redirect('add_question', quiz_id=quiz.id)
 
-    return render(request, 'quizzes/bulk_upload.html', {
-        'quiz': quiz
-    })
+    return redirect('add_question', quiz_id=quiz.id)
 
 
 # =========================
@@ -153,6 +152,7 @@ def submit_quiz(request, quiz_id):
                 pass
 
     percentage = int((score / total_questions) * 100) if total_questions > 0 else 0
+    passed = percentage >= quiz.pass_percentage
 
     # 🔥 FIX: PROVIDE ALL REQUIRED FIELDS
     QuizResult.objects.update_or_create(
@@ -162,11 +162,19 @@ def submit_quiz(request, quiz_id):
             'score': score,
             'total_questions': total_questions,
             'percentage': percentage,
+            'passed': passed,
             'completed_at': now(),
         }
     )
 
-    return redirect('course_detail', quiz.lesson.course.id)
+    # Award gamification points for quiz completion
+    user_points, _ = UserPoints.objects.get_or_create(user=request.user)
+    bonus = 20 if passed else 5
+    user_points.add_points(score + bonus)
+    for badge in Badge.objects.filter(points_required__lte=user_points.total_points):
+        UserBadge.objects.get_or_create(user=request.user, badge=badge)
+
+    return redirect('quiz_result', quiz_id=quiz.id)
 
 @login_required
 def quiz_result(request, quiz_id):

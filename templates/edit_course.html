@@ -1,134 +1,50 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<style>
-.edit-wrapper {
-    max-width: 600px;
-    margin: 60px auto;
-}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.82rem;">
+        <li class="breadcrumb-item"><a href="{% url 'courses' %}">Courses</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'course_detail' course.id %}">{{ course.title }}</a></li>
+        <li class="breadcrumb-item active">Edit</li>
+    </ol>
+</nav>
 
-.edit-card {
-    background: #ffffff;
-    border-radius: 20px;
-    padding: 35px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.12);
-    animation: fadeInUp 0.6s ease;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(25px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.edit-card h2 {
-    text-align: center;
-    margin-bottom: 10px;
-    font-weight: 600;
-}
-
-.edit-card p {
-    text-align: center;
-    font-size: 14px;
-    margin-bottom: 25px;
-}
-
-.edit-card .form-control {
-    border-radius: 10px;
-    padding: 12px;
-    transition: 0.3s ease;
-}
-
-.edit-card .form-control:focus {
-    box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
-}
-
-.form-check-input {
-    cursor: pointer;
-}
-
-.action-buttons {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    margin-top: 30px;
-}
-
-.action-buttons .btn {
-    flex: 1;
-    padding: 10px;
-    border-radius: 10px;
-}
-</style>
-
-<div class="edit-wrapper">
-    <div class="edit-card">
-
-        <h2>✏ Edit Course</h2>
-        <p class="text-muted">
-            Updating details for <strong>{{ course.title }}</strong>
-        </p>
-
-        {% if form.errors %}
-            <div class="alert alert-danger">
-                Please fix the errors below.
-            </div>
-        {% endif %}
-
-        <form method="post">
-            {% csrf_token %}
-
-            <!-- Title -->
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Course Title</label>
-                {{ form.title }}
-                {% if form.title.errors %}
-                    <div class="text-danger small mt-1">
-                        {{ form.title.errors }}
-                    </div>
-                {% endif %}
-            </div>
-
-            <!-- Description -->
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Description</label>
-                {{ form.description }}
-                {% if form.description.errors %}
-                    <div class="text-danger small mt-1">
-                        {{ form.description.errors }}
-                    </div>
-                {% endif %}
-            </div>
-
-            <!-- Active Checkbox -->
-            <div class="form-check mb-4">
-                {{ form.is_active }}
-                <label class="form-check-label ms-2"
-                       for="{{ form.is_active.id_for_label }}">
-                    Course is Active
-                </label>
-            </div>
-
-            <!-- Buttons -->
-            <div class="action-buttons">
-                <button type="submit" class="btn btn-primary">
-                    💾 Save Changes
-                </button>
-
-                <a href="{% url 'course_detail' course.id %}"
-                   class="btn btn-outline-secondary">
-                    Cancel
-                </a>
-            </div>
-
-        </form>
-
+<div class="row justify-content-center">
+<div class="col-lg-7">
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-pencil-fill me-2" style="color:var(--brand);"></i>Edit Course
+        </div>
+        <div class="card-body">
+            {% if form.errors %}
+            <div class="alert alert-danger py-2 mb-3" style="font-size:.83rem;">Please fix the errors below.</div>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Course Title</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}<div class="text-danger mt-1" style="font-size:.78rem;">{{ form.title.errors }}</div>{% endif %}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}<div class="text-danger mt-1" style="font-size:.78rem;">{{ form.description.errors }}</div>{% endif %}
+                </div>
+                <div class="form-check mb-4">
+                    {{ form.is_active }}
+                    <label class="form-check-label ms-1" for="{{ form.is_active.id_for_label }}">Course is Active</label>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-floppy me-1"></i>Save Changes
+                    </button>
+                    <a href="{% url 'course_detail' course.id %}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
     </div>
+</div>
 </div>
 
 {% endblock %}

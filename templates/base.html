@@ -1,154 +1,302 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>BrainBoost</title>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrainBoost – Learning Platform</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
     <style>
-        /* ===== Overlay ===== */
-        .logout-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.4s ease;
-        }
+:root {
+    --brand:#4361EE; --brand-dark:#3348CC; --brand-light:#EEF1FD;
+    --accent:#F72585; --success:#22C55E; --warning:#F59E0B; --danger:#EF4444;
+    --sidebar-bg:#0F172A; --sidebar-w:240px;
+    --bg:#F1F5F9; --card-bg:#FFFFFF; --text:#1E293B; --muted:#64748B; --border:#E2E8F0;
+    --radius-sm:8px; --radius:12px; --radius-lg:18px;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.08); --shadow:0 4px 16px rgba(0,0,0,.10); --shadow-lg:0 12px 40px rgba(0,0,0,.15);
+    --font-head:'Plus Jakarta Sans',sans-serif; --font-body:'DM Sans',sans-serif;
+    --tr:.2s ease;
+}
+[data-theme="dark"]{--bg:#0D1117;--card-bg:#161B22;--text:#E6EDF3;--muted:#8B949E;--border:#30363D;}
+*,*::before,*::after{box-sizing:border-box;}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);margin:0;min-height:100vh;transition:background var(--tr),color var(--tr);}
+h1,h2,h3,h4,h5,h6{font-family:var(--font-head);font-weight:700;color:var(--text);}
+a{color:var(--brand);text-decoration:none;}
+a:hover{color:var(--brand-dark);}
 
-        .logout-overlay.show {
-            opacity: 1;
-            pointer-events: all;
-        }
+/* SIDEBAR */
+.sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;z-index:1000;transition:transform var(--tr);}
+.sidebar-brand{display:flex;align-items:center;gap:10px;padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.07);text-decoration:none;}
+.brand-icon{width:36px;height:36px;background:var(--brand);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.brand-name{font-family:var(--font-head);font-weight:800;font-size:1.1rem;color:#fff;letter-spacing:-.3px;}
+.brand-sub{font-size:.62rem;color:rgba(255,255,255,.35);display:block;letter-spacing:.5px;text-transform:uppercase;}
+.sidebar-nav{flex:1;padding:14px 12px;overflow-y:auto;}
+.nav-section-label{font-size:.62rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.28);padding:12px 8px 5px;display:block;}
+.sidebar-link{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);color:rgba(255,255,255,.58);font-size:.865rem;font-weight:500;transition:all var(--tr);text-decoration:none;margin-bottom:2px;}
+.sidebar-link i{font-size:.95rem;width:18px;text-align:center;flex-shrink:0;}
+.sidebar-link:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sidebar-link.active{background:var(--brand);color:#fff;box-shadow:0 4px 12px rgba(67,97,238,.4);}
+.sidebar-footer{padding:14px 12px;border-top:1px solid rgba(255,255,255,.07);}
+.sidebar-user{display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--radius-sm);background:rgba(255,255,255,.05);margin-bottom:8px;}
+.sidebar-avatar{width:32px;height:32px;background:var(--brand);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;color:#fff;flex-shrink:0;}
+.sidebar-username{font-size:.8rem;font-weight:600;color:#fff;line-height:1.2;}
+.sidebar-role{font-size:.68rem;color:rgba(255,255,255,.38);}
+.stat-badge-inline{display:flex;align-items:center;gap:5px;font-size:.8rem;color:rgba(255,255,255,.55);padding:7px 12px;border-radius:var(--radius-sm);cursor:default;}
 
-        /* ===== Message Card ===== */
-        .logout-card {
-            background: #fff;
-            padding: 30px 40px;
-            border-radius: 12px;
-            text-align: center;
-            animation: scaleIn 0.4s ease;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-        }
+/* TOPBAR */
+.topbar{position:fixed;top:0;left:var(--sidebar-w);right:0;height:60px;background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;z-index:900;gap:10px;transition:background var(--tr);}
+.topbar-clock{font-size:.8rem;color:var(--muted);font-weight:500;margin-right:auto;}
+.topbar-chip{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:50px;font-size:.76rem;font-weight:600;}
+.chip-brand{background:var(--brand-light);color:var(--brand);}
+.chip-orange{background:#FFF7ED;color:#C2410C;}
+.btn-icon{width:34px;height:34px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--card-bg);color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--tr);font-size:.95rem;}
+.btn-icon:hover{background:var(--bg);color:var(--text);}
 
-        @keyframes scaleIn {
-            from {
-                transform: scale(0.85);
-                opacity: 0;
-            }
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
+/* MAIN */
+.main-wrap{margin-left:var(--sidebar-w);padding-top:60px;min-height:100vh;}
+.page-content{padding:28px 28px 60px;max-width:1200px;}
 
-        /* ===== Spinner ===== */
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #ddd;
-            border-top: 4px solid #0d6efd;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
+/* CARDS */
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);transition:box-shadow var(--tr);}
+.card:hover{box-shadow:var(--shadow);}
+.card-header{background:transparent;border-bottom:1px solid var(--border);padding:16px 20px;font-family:var(--font-head);font-weight:700;}
+.card-body{padding:20px;}
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+/* STAT CARDS */
+.stat-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;transition:all var(--tr);}
+.stat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);}
+.stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;margin-bottom:14px;}
+.stat-value{font-family:var(--font-head);font-size:1.75rem;font-weight:800;color:var(--text);line-height:1;}
+.stat-label{font-size:.78rem;color:var(--muted);font-weight:500;margin-top:4px;}
 
-        /* ===== Badge Pills ===== */
-        .badge-pill {
-            background: #0d6efd;
-            color: white;
-            border-radius: 50px;
-            padding: 4px 10px;
-            font-size: 12px;
-            margin-left: 4px;
-        }
+/* PAGE HEADER */
+.page-header{margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+.page-header h2{font-size:1.55rem;font-weight:800;margin:0;}
+.page-header p{color:var(--muted);margin:4px 0 0;font-size:.88rem;}
+
+/* BUTTONS */
+.btn{font-family:var(--font-body);font-weight:600;border-radius:var(--radius-sm);transition:all var(--tr);}
+.btn-primary{background:var(--brand);border-color:var(--brand);}
+.btn-primary:hover{background:var(--brand-dark);border-color:var(--brand-dark);transform:translateY(-1px);box-shadow:0 4px 12px rgba(67,97,238,.35);}
+.btn-success:hover,.btn-danger:hover,.btn-warning:hover{transform:translateY(-1px);}
+
+/* FORMS */
+.form-control,.form-select{border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:.88rem;padding:10px 13px;background:var(--card-bg);color:var(--text);transition:border-color var(--tr),box-shadow var(--tr);}
+.form-control:focus,.form-select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(67,97,238,.15);background:var(--card-bg);color:var(--text);}
+.form-label{font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:5px;}
+textarea.form-control{resize:vertical;}
+
+/* ALERTS */
+.alert{border:none;border-radius:var(--radius-sm);font-size:.875rem;font-weight:500;}
+
+/* TABLE */
+.table{color:var(--text);}
+.table th{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1px solid var(--border);padding:10px 14px;background:transparent;}
+.table td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:.875rem;}
+.table tbody tr:last-child td{border-bottom:none;}
+.table tbody tr:hover td{background:rgba(67,97,238,.03);}
+
+/* LIST GROUP */
+.list-group-item{border:1px solid var(--border);background:var(--card-bg);color:var(--text);padding:13px 16px;}
+
+/* PROGRESS */
+.progress{background:var(--border);border-radius:50px;height:8px;}
+.progress-bar{background:var(--brand);border-radius:50px;}
+
+/* COURSE CARD */
+.course-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all var(--tr);height:100%;display:flex;flex-direction:column;}
+.course-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:var(--brand);}
+.course-card-accent{height:4px;background:linear-gradient(90deg,var(--brand),var(--accent));flex-shrink:0;}
+.course-card-body{padding:18px;flex:1;display:flex;flex-direction:column;}
+.course-card-title{font-family:var(--font-head);font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:8px;}
+.course-card-desc{color:var(--muted);font-size:.83rem;line-height:1.6;flex:1;}
+
+/* LESSON ROW */
+.lesson-row{display:flex;align-items:center;gap:12px;padding:13px 16px;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;transition:all var(--tr);}
+.lesson-row:hover{border-color:var(--brand);background:var(--brand-light);}
+.lesson-num{width:28px;height:28px;background:var(--brand-light);color:var(--brand);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;flex-shrink:0;}
+.lesson-title{flex:1;font-weight:600;font-size:.88rem;color:var(--text);}
+
+/* DROP ZONE */
+.drop-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:26px;text-align:center;cursor:pointer;transition:all var(--tr);background:var(--bg);}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--brand);background:var(--brand-light);}
+.drop-zone input[type="file"]{display:none;}
+.drop-zone .drop-icon{font-size:1.8rem;color:var(--muted);margin-bottom:6px;}
+.drop-zone .drop-text{font-size:.82rem;color:var(--muted);}
+
+/* QUIZ */
+.quiz-question-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:12px;}
+.question-num{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--brand);margin-bottom:6px;}
+.form-check-input:checked{background-color:var(--brand);border-color:var(--brand);}
+.form-check-label{font-size:.88rem;}
+
+/* RESULT */
+.result-ring{width:120px;height:120px;border-radius:50%;border:8px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 20px;}
+.result-ring.pass{border-color:var(--success);}
+.result-ring.fail{border-color:var(--warning);}
+.result-pct{font-family:var(--font-head);font-size:1.75rem;font-weight:800;line-height:1;}
+.result-pct-label{font-size:.68rem;color:var(--muted);}
+
+/* AUTH */
+.auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0F172A 0%,#1E293B 50%,#162032 100%);}
+.auth-card{width:420px;max-width:95vw;background:var(--card-bg);border-radius:var(--radius-lg);padding:38px;box-shadow:var(--shadow-lg);animation:slideUp .6s cubic-bezier(.16,1,.3,1);}
+@keyframes slideUp{from{opacity:0;transform:translateY(32px);}to{opacity:1;transform:translateY(0);}}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;justify-content:center;}
+.auth-logo .logo-icon{width:40px;height:40px;background:var(--brand);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;}
+.auth-logo .logo-name{font-family:var(--font-head);font-weight:800;font-size:1.25rem;color:var(--text);}
+.auth-title{font-size:1.35rem;font-weight:800;text-align:center;margin-bottom:4px;}
+.auth-sub{text-align:center;color:var(--muted);font-size:.84rem;margin-bottom:26px;}
+
+/* LOGOUT OVERLAY */
+.logout-overlay{position:fixed;inset:0;background:rgba(15,23,42,.75);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;pointer-events:none;transition:opacity .4s ease;}
+.logout-overlay.show{opacity:1;pointer-events:all;}
+.logout-card{background:var(--card-bg);padding:34px 48px;border-radius:var(--radius-lg);text-align:center;box-shadow:var(--shadow-lg);animation:scaleIn .4s ease;}
+@keyframes scaleIn{from{transform:scale(.9);opacity:0;}to{transform:scale(1);opacity:1;}}
+.logout-spinner{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--brand);border-radius:50%;animation:spin 1s linear infinite;margin:14px auto 0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* MOBILE */
+.sidebar-toggle{display:none;position:fixed;top:13px;left:13px;z-index:1100;width:36px;height:36px;border-radius:var(--radius-sm);background:var(--brand);border:none;color:#fff;align-items:center;justify-content:center;font-size:1.1rem;cursor:pointer;}
+@media(max-width:991px){
+    .sidebar{transform:translateX(-100%);}
+    .sidebar.open{transform:translateX(0);}
+    .sidebar-toggle{display:flex;}
+    .topbar{left:0;}
+    .main-wrap{margin-left:0;}
+    .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;}
+    .sidebar-overlay.show{display:block;}
+    .page-content{padding:18px 14px 60px;}
+}
+
+/* LEADERBOARD */
+.lb-row-me{background:var(--brand-light) !important;}
+.rank-medal{font-size:1.2rem;}
+
+/* LESSON EMBED */
+.lesson-embed{width:100%;height:540px;border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;}
+
+/* BADGE */
+.badge{font-weight:600;letter-spacing:.2px;border-radius:6px;}
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-dark bg-dark px-3">
-    <a class="navbar-brand" href="/">🧠 BrainBoost</a>
+{% if user.is_authenticated %}
+<button class="sidebar-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    {% if user.is_authenticated %}
-        <div class="d-flex align-items-center ms-auto gap-3">
-
-            <!-- USER STATS -->
-            <span class="text-white small">
-                👤 {{ user.username }}
-            </span>
-
-            {% if user.points %}
-                <span class="badge bg-primary">
-                    ⭐ {{ user.points.total_points }} pts
-                </span>
-                <span class="badge bg-success">
-                    🧩 Level {{ user.points.level }}
-                </span>
-            {% endif %}
-
-            <!-- BADGES PREVIEW -->
-            {% if user.badges.all %}
-                <span class="text-white small">
-                    🏆
-                    {% for ub in user.badges.all|slice:":3" %}
-                        <span class="badge-pill">{{ ub.badge.icon }}</span>
-                    {% endfor %}
-                </span>
-            {% endif %}
-
-            <!-- Logout Form -->
-            <form id="logoutForm" method="post" action="{% url 'logout' %}">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-sm btn-outline-light">
-                    Logout
-                </button>
-            </form>
+<aside class="sidebar" id="sidebar">
+    <a href="{% url 'dashboard' %}" class="sidebar-brand">
+        <div class="brand-icon">🧠</div>
+        <div>
+            <div class="brand-name">BrainBoost</div>
+            <span class="brand-sub">Learning Platform</span>
         </div>
+    </a>
+
+    <nav class="sidebar-nav">
+        <span class="nav-section-label">Navigation</span>
+        <a href="{% url 'dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <i class="bi bi-grid-1x2-fill"></i> Dashboard
+        </a>
+        <a href="{% url 'courses' %}" class="sidebar-link">
+            <i class="bi bi-book-fill"></i> Courses
+        </a>
+        <a href="{% url 'leaderboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'leaderboard' %}active{% endif %}">
+            <i class="bi bi-trophy-fill"></i> Leaderboard
+        </a>
+
+        {% if user.is_staff or user.is_superuser %}
+        <span class="nav-section-label">Admin</span>
+        <a href="{% url 'pending_user_approvals' %}" class="sidebar-link">
+            <i class="bi bi-person-check-fill"></i> User Approvals
+        </a>
+        <a href="/admin/" class="sidebar-link" target="_blank">
+            <i class="bi bi-gear-fill"></i> Django Admin
+        </a>
+        {% endif %}
+
+        {% if user.points %}
+        <span class="nav-section-label">Your Stats</span>
+        <div class="stat-badge-inline"><i class="bi bi-star-fill" style="color:#F59E0B;"></i> {{ user.points.total_points }} pts</div>
+        <div class="stat-badge-inline"><i class="bi bi-layers-fill" style="color:var(--brand);"></i> Level {{ user.points.level }}</div>
+        {% endif %}
+
+        {% if user.badges.all %}
+        <div class="stat-badge-inline" style="flex-wrap:wrap;">
+            <i class="bi bi-award-fill" style="color:#F59E0B;"></i>
+            {% for ub in user.badges.all|slice:":5" %}<span title="{{ ub.badge.name }}">{{ ub.badge.icon }}</span>{% endfor %}
+        </div>
+        {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <div class="sidebar-avatar">{{ user.username|slice:":1"|upper }}</div>
+            <div>
+                <div class="sidebar-username">{{ user.username }}</div>
+                <div class="sidebar-role">{{ user.role }}</div>
+            </div>
+        </div>
+        <form id="logoutForm" method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm w-100" style="background:rgba(255,255,255,.07);color:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.1);">
+                <i class="bi bi-box-arrow-right me-2"></i>Sign Out
+            </button>
+        </form>
+    </div>
+</aside>
+
+<header class="topbar">
+    <span class="topbar-clock" id="topbarClock"></span>
+    {% if user.points %}
+    <div class="topbar-chip chip-brand"><i class="bi bi-star-fill"></i> {{ user.points.total_points }} pts</div>
+    <div class="topbar-chip chip-orange"><i class="bi bi-layers"></i> Lv {{ user.points.level }}</div>
     {% endif %}
-</nav>
+    {% if user.current_streak > 0 %}
+    <div class="topbar-chip chip-orange">🔥 {{ user.current_streak }}d</div>
+    {% endif %}
+    <button class="btn-icon" onclick="toggleTheme()" title="Toggle Theme"><i class="bi bi-moon-stars-fill"></i></button>
+</header>
 
-<div class="container mt-4">
-    {% block content %}{% endblock %}
-</div>
-
-<!-- ===== Logout Overlay ===== -->
-<div class="logout-overlay" id="logoutOverlay">
-    <div class="logout-card">
-        <h5 class="mb-2">Logging you out</h5>
-        <p class="text-muted mb-3">
-            Your account is being logged out.<br>
-            Thank you for using <strong>BrainBoost</strong>.
-        </p>
-        <div class="spinner"></div>
+<div class="main-wrap">
+    <div class="page-content">
+        {% if messages %}
+        <div class="mb-3">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
     </div>
 </div>
 
+<div class="logout-overlay" id="logoutOverlay">
+    <div class="logout-card">
+        <h5 class="mb-1" style="font-family:var(--font-head);">Signing you out…</h5>
+        <p class="text-muted mb-0" style="font-size:.875rem;">Thank you for learning with <strong>BrainBoost</strong>.</p>
+        <div class="logout-spinner"></div>
+    </div>
+</div>
+
+{% else %}
+<div class="auth-page">{% block auth_content %}{% endblock %}</div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-/* ===== Logout Animation Logic ===== */
-const logoutForm = document.getElementById("logoutForm");
-const overlay = document.getElementById("logoutOverlay");
-
-if (logoutForm) {
-    logoutForm.addEventListener("submit", function (e) {
-        e.preventDefault(); // stop immediate logout
-        overlay.classList.add("show");
-        setTimeout(() => {
-            logoutForm.submit();
-        }, 1500);
-    });
-}
+(function tick(){const el=document.getElementById('topbarClock');if(el)el.textContent=new Date().toLocaleString('en-US',{weekday:'short',hour:'2-digit',minute:'2-digit'});setTimeout(tick,10000);})();
+function toggleTheme(){const t=document.body.getAttribute('data-theme')==='dark'?'light':'dark';document.body.setAttribute('data-theme',t);localStorage.setItem('theme',t);}
+document.body.setAttribute('data-theme',localStorage.getItem('theme')||'light');
+const logoutForm=document.getElementById('logoutForm'),overlay=document.getElementById('logoutOverlay');
+if(logoutForm){logoutForm.addEventListener('submit',function(e){e.preventDefault();overlay.classList.add('show');setTimeout(()=>logoutForm.submit(),1500);});}
+const sidebar=document.getElementById('sidebar'),sidebarToggle=document.getElementById('sidebarToggle'),sidebarOverlay=document.getElementById('sidebarOverlay');
+if(sidebarToggle){sidebarToggle.addEventListener('click',()=>{sidebar.classList.toggle('open');sidebarOverlay.classList.toggle('show');});sidebarOverlay.addEventListener('click',()=>{sidebar.classList.remove('open');sidebarOverlay.classList.remove('show');});}
 </script>
-
+{% block extra_js %}{% endblock %}
 </body>
 </html>

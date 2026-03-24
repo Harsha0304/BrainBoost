@@ -1,18 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import RegisterForm
-from .models import UserApprovalLog
+from .models import UserApprovalLog, User
 from administration.models import EmailOTP
 from django.core.mail import send_mail
 import random
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponseForbidden
-from .models import User
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-
-from .models import UserApprovalLog
-
 
 def register(request):
     if request.method == 'POST':
@@ -97,7 +93,6 @@ def verify_email(request):
 
     return render(request, 'verify_email.html')
 
-User = get_user_model()
 
 def is_staff_user(user):
     return user.is_staff or user.is_superuser
