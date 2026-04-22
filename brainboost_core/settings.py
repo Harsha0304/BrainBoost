@@ -9,7 +9,14 @@ SECRET_KEY = 'django-insecure-3!y50$-%!k@julu-l0hf+mtttnoj-iwj)o0!clfmpo@+16x68p
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    "brainboost.codecrestinovations.com",
+    "localhost"
+]
+CSRF_TRUSTED_ORIGINS = [
+    "https://brainboost.codecrestinovations.com",
+    "localhost"
+]
 
 
 # Application definition

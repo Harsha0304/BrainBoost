@@ -1,6 +1,17 @@
-asgiref
-Django
-djangorestframework
-sqlparse
-tzdata
-reportlab
+# Django core
+Django==5.1.4
+
+# PostgreSQL adapter
+psycopg2-binary==2.9.10
+
+# PDF generation (used in courses/views.py for certificate download)
+reportlab==4.2.5
+
+# WSGI server for production
+gunicorn==23.0.0
+
+# Pillow — required for ImageField / media uploads
+Pillow==11.1.0
+
+# Environment variable management
+python-decouple==3.8
